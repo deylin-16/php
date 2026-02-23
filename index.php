@@ -2,1333 +2,594 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
-$url_logo = $_GET['logo'] ?? '';
-$estilo = (int)($_GET['estilo'] ?? 1);
-$img_predeterminada = "https://ik.imagekit.io/pm10ywrf6f/bot_by_deylin/1769830823123_e336030d2dfd15b3f2a9bec8d30e15f3_YZEsD9KKM.jpg";
+$url_logo    = $_GET['logo']   ?? '';
+$estilo      = max(1, min(10, (int)($_GET['estilo'] ?? 1)));
+$img_default = "https://ik.imagekit.io/pm10ywrf6f/bot_by_deylin/1769830823123_e336030d2dfd15b3f2a9bec8d30e15f3_YZEsD9KKM.jpg";
 
-// ===== DASHBOARD PRIDE ULTRA-LUXE =====
+// ════════════════════════════════════════════════════════════
+//   DASHBOARD  —  aparece solo si no viene ?logo=
+// ════════════════════════════════════════════════════════════
 if (empty($url_logo)) {
-    $presets_meta = [
-        1  => ['label' => '🏳️‍🌈 PRIDE WAVE',      'desc' => 'Ondas arcoíris explosivas'],
-        2  => ['label' => '💜 BISEXUAL NEON',   'desc' => 'Cyber bi-magenta'],
-        3  => ['label' => '🌈 RAINBOW FIRE',    'desc' => 'Fuego de todos los colores'],
-        4  => ['label' => '🦋 TRANS CIELO',     'desc' => 'Azul y rosa pastel trans'],
-        5  => ['label' => '⚡ QUEER VOLTAJE',   'desc' => 'Energía eléctrica queer'],
-        6  => ['label' => '🌸 LESBIAN SUNSET',  'desc' => 'Atardecer lesbiana naranja-rosa'],
-        7  => ['label' => '🖤 DARK PRIDE',      'desc' => 'Orgullo oscuro y elegante'],
-        8  => ['label' => '✨ GLITTER QUEEN',   'desc' => 'Purpurina y glamour total'],
-        9  => ['label' => '🌊 PROGRESS FLAG',   'desc' => 'Bandera progreso moderna'],
-        10 => ['label' => '👑 ROYAL PRIDE',     'desc' => 'Realeza arcoíris de lujo'],
-    ];
-    ?>
-<!DOCTYPE html>
+
+$styles_meta = [
+    1  => ['name'=>'PRIDE WAVE',      'badge'=>'SUPER PRIDE',  'pal'=>['#FF0018','#FF8C00','#FFED00','#008026','#004DFF','#750787']],
+    2  => ['name'=>'BISEXUAL NEON',   'badge'=>'BI QUEEN',     'pal'=>['#D60270','#D60270','#9B4F96','#0038A8','#0038A8']],
+    3  => ['name'=>'RAINBOW FIRE',    'badge'=>'MEGA GAY',     'pal'=>['#750787','#004DFF','#008026','#FFED00','#FF8C00','#FF0018']],
+    4  => ['name'=>'TRANS CIELO',     'badge'=>'TRANS ICON',   'pal'=>['#55CDFC','#F7A8B8','#FFFFFF','#F7A8B8','#55CDFC']],
+    5  => ['name'=>'QUEER VOLTAJE',   'badge'=>'QUEER ENERGY', 'pal'=>['#00ff88','#004DFF','#750787','#D60270','#FF8C00']],
+    6  => ['name'=>'LESBIAN SUNSET',  'badge'=>'LESBI LEGEND', 'pal'=>['#D62900','#FF9B55','#FFFFFF','#D461A6','#A50062']],
+    7  => ['name'=>'DARK PRIDE',      'badge'=>'SHADOW QUEEN', 'pal'=>['#2D0037','#750787','#004DFF','#008026','#FF0018']],
+    8  => ['name'=>'GLITTER QUEEN',   'badge'=>'GLITTER ICON', 'pal'=>['#FF85E5','#D460D4','#FFFFFF','#D460D4','#FF85E5']],
+    9  => ['name'=>'PROGRESS',        'badge'=>'ALLY AWARD',   'pal'=>['#000000','#784F17','#FF0018','#FF8C00','#FFED00','#008026','#004DFF','#750787']],
+    10 => ['name'=>'ROYAL PRIDE',     'badge'=>'CROWN ROYAL',  'pal'=>['#FFD700','#FF8C00','#750787','#004DFF','#008026']],
+];
+
+?><!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ DEYLIN PRIDE SYSTEMS | ULTRA LUXE BANNER LAB</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --r: #FF0018; --o: #FFA52C; --y: #FFFF41; --g: #008018;
-            --b: #0000F9; --v: #86007D;
-            --trans-blue: #55CDFC; --trans-pink: #F7A8B8;
-            --bg-deep: #050508; --bg-card: rgba(255,255,255,0.04);
-            --glow: 0 0 40px rgba(255,100,200,0.3);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            min-height: 100vh;
-            background: var(--bg-deep);
-            font-family: 'DM Sans', sans-serif;
-            color: #fff;
-            overflow-x: hidden;
-            cursor: none;
-        }
-
-        /* CURSOR CUSTOM */
-        .cursor {
-            position: fixed; pointer-events: none; z-index: 9999;
-            width: 20px; height: 20px; border-radius: 50%;
-            background: conic-gradient(#FF0018, #FFA52C, #FFFF41, #008018, #0000F9, #86007D, #FF0018);
-            mix-blend-mode: screen;
-            transition: transform 0.1s ease;
-            transform: translate(-50%, -50%);
-        }
-        .cursor-trail {
-            position: fixed; pointer-events: none; z-index: 9998;
-            width: 8px; height: 8px; border-radius: 50%;
-            background: white; opacity: 0.5;
-            transition: all 0.3s ease;
-            transform: translate(-50%, -50%);
-        }
-
-        /* BACKGROUND ANIMADO */
-        .bg-canvas {
-            position: fixed; inset: 0; z-index: 0;
-            overflow: hidden;
-        }
-
-        /* Stripes de la bandera pride como fondo */
-        .pride-stripe {
-            position: absolute;
-            width: 150%;
-            height: 16.666%;
-            transform-origin: left center;
-            opacity: 0.07;
-            animation: stripeFloat 8s ease-in-out infinite;
-        }
-        .pride-stripe:nth-child(1) { top: 0%;        background: var(--r); animation-delay: 0s; }
-        .pride-stripe:nth-child(2) { top: 16.666%;   background: var(--o); animation-delay: 0.3s; }
-        .pride-stripe:nth-child(3) { top: 33.333%;   background: var(--y); animation-delay: 0.6s; }
-        .pride-stripe:nth-child(4) { top: 50%;       background: var(--g); animation-delay: 0.9s; }
-        .pride-stripe:nth-child(5) { top: 66.666%;   background: var(--b); animation-delay: 1.2s; }
-        .pride-stripe:nth-child(6) { top: 83.333%;   background: var(--v); animation-delay: 1.5s; }
-
-        @keyframes stripeFloat {
-            0%, 100% { transform: skewY(-1deg) translateX(-2%); opacity: 0.07; }
-            50% { transform: skewY(1deg) translateX(2%); opacity: 0.12; }
-        }
-
-        /* PARTÍCULAS FLOTANTES */
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            animation: particleRise linear infinite;
-            opacity: 0;
-        }
-        @keyframes particleRise {
-            0% { transform: translateY(100vh) scale(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 0.6; }
-            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
-        }
-
-        /* LAYOUT */
-        .page-wrapper {
-            position: relative; z-index: 10;
-            min-height: 100vh;
-            display: flex; flex-direction: column;
-            padding: 0;
-        }
-
-        /* HERO HEADER */
-        .hero-header {
-            text-align: center;
-            padding: 60px 20px 40px;
-            position: relative;
-        }
-
-        .hero-header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--r), var(--o), var(--y), var(--g), var(--b), var(--v), var(--r));
-            background-size: 200% 100%;
-            animation: rainbowSlide 3s linear infinite;
-        }
-
-        @keyframes rainbowSlide {
-            0% { background-position: 0% 0%; }
-            100% { background-position: 200% 0%; }
-        }
-
-        .badge-pride {
-            display: inline-block;
-            background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 100px;
-            padding: 6px 20px;
-            font-family: 'Space Mono', monospace;
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 24px;
-            color: rgba(255,255,255,0.6);
-        }
-
-        .main-title {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(3rem, 8vw, 7rem);
-            font-weight: 900;
-            line-height: 0.9;
-            letter-spacing: -2px;
-            margin-bottom: 16px;
-        }
-
-        .title-pride {
-            background: linear-gradient(135deg, var(--r) 0%, var(--o) 20%, var(--y) 40%, var(--g) 60%, var(--b) 80%, var(--v) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            display: block;
-            animation: hueShift 6s linear infinite;
-            filter: drop-shadow(0 0 30px rgba(255,100,200,0.5));
-        }
-
-        @keyframes hueShift {
-            0% { filter: drop-shadow(0 0 30px rgba(255,0,24,0.6)) hue-rotate(0deg); }
-            33% { filter: drop-shadow(0 0 30px rgba(0,134,255,0.6)) hue-rotate(120deg); }
-            66% { filter: drop-shadow(0 0 30px rgba(134,0,125,0.6)) hue-rotate(240deg); }
-            100% { filter: drop-shadow(0 0 30px rgba(255,0,24,0.6)) hue-rotate(360deg); }
-        }
-
-        .title-systems {
-            color: rgba(255,255,255,0.15);
-            letter-spacing: 8px;
-            font-size: 0.4em;
-            font-family: 'Space Mono', monospace;
-            font-weight: 400;
-            -webkit-text-fill-color: rgba(255,255,255,0.15);
-            display: block;
-            margin-top: 10px;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: rgba(255,255,255,0.4);
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            font-family: 'Space Mono', monospace;
-            margin-top: 12px;
-        }
-
-        /* MAIN CONTENT GRID */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 420px;
-            gap: 0;
-            flex: 1;
-            max-width: 1600px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 0 30px 60px;
-        }
-
-        /* PREVIEW PANEL */
-        .preview-panel {
-            padding: 30px 40px 30px 0;
-        }
-
-        .preview-label {
-            font-family: 'Space Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 4px;
-            color: rgba(255,255,255,0.3);
-            text-transform: uppercase;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .preview-label::before {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255,255,255,0.08);
-        }
-
-        .preview-frame {
-            position: relative;
-            border-radius: 20px;
-            overflow: hidden;
-        }
-
-        .preview-frame::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            background: linear-gradient(135deg, var(--r), var(--o), var(--y), var(--g), var(--b), var(--v));
-            border-radius: 22px;
-            z-index: -1;
-            animation: borderSpin 4s linear infinite;
-            background-size: 300% 300%;
-        }
-
-        @keyframes borderSpin {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        #preview-img {
-            width: 100%;
-            display: block;
-            border-radius: 18px;
-            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-
-        .preview-loading {
-            position: absolute;
-            inset: 0;
-            background: rgba(5,5,8,0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            border-radius: 18px;
-            font-family: 'Space Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 3px;
-            color: rgba(255,255,255,0.5);
-        }
-
-        .action-row {
-            display: grid;
-            grid-template-columns: 1fr auto auto;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 14px 24px;
-            border-radius: 12px;
-            border: none;
-            font-family: 'Space Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-main {
-            background: linear-gradient(135deg, var(--r), var(--o), var(--y), var(--g), var(--b), var(--v));
-            background-size: 200% 200%;
-            color: #000;
-            font-weight: 700;
-            animation: gradientShift 4s ease infinite;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        .btn-main:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(255, 100, 200, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.7);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-
-        /* PRIDE BANNER SECTION */
-        .pride-banner-section {
-            margin-top: 30px;
-            padding: 28px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .pride-banner-section::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--r), var(--o), var(--y), var(--g), var(--b), var(--v));
-        }
-
-        .pride-flag-display {
-            display: flex;
-            height: 70px;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 18px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
-        }
-
-        .flag-stripe {
-            flex: 1;
-            transition: flex 0.3s ease;
-        }
-
-        .flag-stripe:hover { flex: 2; }
-
-        .pride-quote {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: 18px;
-            line-height: 1.5;
-            color: rgba(255,255,255,0.8);
-            border-left: 3px solid;
-            border-image: linear-gradient(to bottom, var(--r), var(--v)) 1;
-            padding-left: 18px;
-            margin-bottom: 14px;
-        }
-
-        .pride-tagline {
-            font-size: 12px;
-            color: rgba(255,255,255,0.35);
-            letter-spacing: 2px;
-            font-family: 'Space Mono', monospace;
-            text-transform: uppercase;
-        }
-
-        /* SIDEBAR STYLES */
-        .styles-panel {
-            border-left: 1px solid rgba(255,255,255,0.06);
-            padding: 30px 0 30px 30px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-header {
-            margin-bottom: 24px;
-        }
-
-        .panel-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .panel-subtitle {
-            font-size: 11px;
-            color: rgba(255,255,255,0.3);
-            font-family: 'Space Mono', monospace;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .styles-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .styles-list::-webkit-scrollbar { width: 3px; }
-        .styles-list::-webkit-scrollbar-track { background: transparent; }
-        .styles-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
-        .style-card {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 14px 18px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .style-card::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 3px;
-            background: transparent;
-            transition: background 0.3s ease;
-        }
-
-        .style-card:hover::before,
-        .style-card.active::before {
-            background: linear-gradient(to bottom, var(--r), var(--v));
-        }
-
-        .style-card:hover, .style-card.active {
-            background: rgba(255,255,255,0.07);
-            border-color: rgba(255,255,255,0.15);
-            transform: translateX(4px);
-        }
-
-        .style-card.active {
-            box-shadow: 0 0 20px rgba(255,100,200,0.15);
-        }
-
-        .style-num {
-            font-family: 'Space Mono', monospace;
-            font-size: 10px;
-            color: rgba(255,255,255,0.25);
-            min-width: 20px;
-        }
-
-        .style-swatch {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .style-info { flex: 1; }
-
-        .style-name {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
-
-        .style-desc {
-            font-size: 11px;
-            color: rgba(255,255,255,0.35);
-        }
-
-        .style-arrow {
-            color: rgba(255,255,255,0.2);
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .style-card:hover .style-arrow,
-        .style-card.active .style-arrow {
-            color: rgba(255,255,255,0.7);
-            transform: translateX(4px);
-        }
-
-        /* URL INPUT */
-        .url-section {
-            margin-top: auto;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .input-label {
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: rgba(255,255,255,0.3);
-            font-family: 'Space Mono', monospace;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .url-input {
-            flex: 1;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 12px 16px;
-            color: white;
-            font-family: 'Space Mono', monospace;
-            font-size: 11px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .url-input:focus {
-            border-color: rgba(255,100,200,0.5);
-        }
-
-        .url-input::placeholder {
-            color: rgba(255,255,255,0.2);
-        }
-
-        .btn-load {
-            padding: 12px 18px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-load:hover {
-            background: linear-gradient(135deg, var(--r), var(--v));
-            border-color: transparent;
-        }
-
-        /* FOOTER */
-        .pride-footer {
-            position: relative;
-            z-index: 10;
-            padding: 0 30px 30px;
-            max-width: 1600px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        .footer-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 30px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 16px;
-        }
-
-        .footer-brand {
-            font-family: 'Playfair Display', serif;
-            font-size: 20px;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--r), var(--o), var(--y), var(--g), var(--b), var(--v));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .footer-quote {
-            font-size: 13px;
-            color: rgba(255,255,255,0.3);
-            font-style: italic;
-        }
-
-        .footer-tech {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .tech-pill {
-            padding: 4px 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 100px;
-            font-family: 'Space Mono', monospace;
-            font-size: 10px;
-            color: rgba(255,255,255,0.4);
-            letter-spacing: 1px;
-        }
-
-        /* TOAST NOTIFICATION */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: linear-gradient(135deg, rgba(20,20,30,0.95), rgba(10,10,20,0.95));
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px;
-            padding: 16px 28px;
-            font-family: 'Space Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: white;
-            z-index: 9999;
-            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-            backdrop-filter: blur(20px);
-            white-space: nowrap;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .toast-inner {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .toast-icon {
-            font-size: 20px;
-        }
-
-        /* SCROLL REVEAL */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            animation: revealUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-
-        @keyframes revealUp {
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Scrollbar global */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
-
-        /* PRIDE HEARTS ANIMADOS */
-        .floating-hearts {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9997;
-        }
-
-        @media (max-width: 900px) {
-            .main-grid { grid-template-columns: 1fr; padding: 0 16px 40px; }
-            .styles-panel { border-left: none; border-top: 1px solid rgba(255,255,255,0.06); padding: 30px 0 0; }
-            .preview-panel { padding: 20px 0; }
-            .action-row { grid-template-columns: 1fr 1fr; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deylin Systems · Pride Banner Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Syne+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080A0F; --s1:#0E1118; --s2:#141820;
+  --brd:rgba(255,255,255,.07); --t1:#FFFFFF;
+  --t2:rgba(255,255,255,.45); --t3:rgba(255,255,255,.18);
+  --mono:'Syne Mono',monospace; --sans:'Syne',sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--sans);overflow-x:hidden}
+
+/* LAYOUT */
+.layout{
+  display:grid;
+  grid-template-columns:1fr 380px;
+  grid-template-rows:auto 1fr auto;
+  grid-template-areas:"hd hd""pv sb""ft ft";
+  min-height:100vh;max-width:1400px;margin:0 auto;padding:0 32px;
+}
+
+/* HEADER */
+header{
+  grid-area:hd;display:flex;align-items:center;justify-content:space-between;
+  padding:28px 0 24px;border-bottom:1px solid var(--brd);
+}
+.logo-mark{font-size:15px;font-weight:800;letter-spacing:3px;text-transform:uppercase}
+.logo-mark em{color:var(--t3);font-style:normal}
+.hpills{display:flex;gap:8px}
+.pill{padding:5px 14px;border-radius:100px;border:1px solid var(--brd);
+  font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--t2)}
+.pill.live{color:#4ade80;border-color:rgba(74,222,128,.2)}
+
+/* PREVIEW */
+.preview-area{grid-area:pv;padding:36px 36px 36px 0;display:flex;flex-direction:column;gap:18px}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--t3);text-transform:uppercase}
+
+.preview-wrap{position:relative;border-radius:18px;overflow:hidden;
+  background:var(--s1);border:1px solid var(--brd);aspect-ratio:2/1}
+.preview-wrap img{width:100%;height:100%;object-fit:cover;display:block;
+  transition:opacity .4s,transform .5s cubic-bezier(.23,1,.32,1)}
+.preview-wrap.loading img{opacity:.25;transform:scale(.97)}
+.loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--t3);
+  opacity:0;pointer-events:none;transition:opacity .3s}
+.preview-wrap.loading .loader{opacity:1}
+
+.action-bar{display:flex;gap:10px}
+.btn{padding:12px 22px;border-radius:11px;border:none;
+  font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  cursor:pointer;transition:all .25s ease}
+.btn-copy{flex:1;background:var(--t1);color:#000;font-weight:700}
+.btn-copy:hover{background:rgba(255,255,255,.85);transform:translateY(-2px)}
+.btn-sm{background:var(--s2);color:var(--t2);border:1px solid var(--brd)}
+.btn-sm:hover{background:var(--s1);color:var(--t1)}
+
+.url-row{display:flex;gap:10px;padding:16px 18px;background:var(--s1);
+  border-radius:14px;border:1px solid var(--brd)}
+.url-row input{flex:1;background:transparent;border:none;outline:none;
+  font-family:var(--mono);font-size:11px;color:var(--t1);letter-spacing:.5px}
+.url-row input::placeholder{color:var(--t3)}
+.url-row button{padding:8px 16px;background:var(--s2);border:1px solid var(--brd);
+  border-radius:8px;color:var(--t2);font-family:var(--mono);font-size:11px;
+  cursor:pointer;transition:all .2s;letter-spacing:1px}
+.url-row button:hover{background:var(--t1);color:#000;border-color:var(--t1)}
+
+.endpoint-box{padding:14px 18px;background:var(--s1);border-radius:14px;
+  border:1px solid var(--brd);font-family:var(--mono);font-size:10px;
+  color:var(--t3);letter-spacing:.5px;word-break:break-all;line-height:1.8}
+.endpoint-box strong{color:var(--t2);display:block;margin-bottom:4px}
+#epUrl{color:rgba(255,255,255,.55)}
+
+/* SIDEBAR */
+.sidebar{grid-area:sb;padding:36px 0 36px 28px;border-left:1px solid var(--brd);
+  display:flex;flex-direction:column;gap:16px}
+.sidebar-title{font-size:24px;font-weight:800;letter-spacing:-0.5px}
+.sidebar-sub{font-family:var(--mono);font-size:10px;letter-spacing:2.5px;
+  color:var(--t3);text-transform:uppercase;margin-top:4px}
+
+.styles-grid{display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;padding-right:4px}
+.styles-grid::-webkit-scrollbar{width:2px}
+.styles-grid::-webkit-scrollbar-thumb{background:var(--brd);border-radius:4px}
+
+.sc{display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--s1);border-radius:12px;border:1px solid var(--brd);
+  cursor:pointer;transition:all .25s cubic-bezier(.23,1,.32,1);position:relative}
+.sc:hover{border-color:rgba(255,255,255,.18);transform:translateX(5px)}
+.sc.active{background:var(--t1);border-color:var(--t1)}
+.sc.active .sc-name{color:#000}
+.sc.active .sc-badge,.sc.active .sc-num,.sc.active .sc-arrow{color:rgba(0,0,0,.35)}
+
+.sc-swatch{width:38px;height:38px;border-radius:8px;overflow:hidden;
+  display:flex;flex-direction:column;flex-shrink:0}
+.sc-swatch-row{flex:1}
+.sc-info{flex:1}
+.sc-name{font-size:13px;font-weight:700;letter-spacing:.3px}
+.sc-badge{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--t3);margin-top:3px}
+.sc-num{font-family:var(--mono);font-size:10px;color:var(--t3);min-width:22px;text-align:right}
+.sc-arrow{font-size:18px;color:var(--t3);transition:transform .2s}
+.sc:hover .sc-arrow,.sc.active .sc-arrow{transform:translateX(3px)}
+
+/* FOOTER */
+footer{grid-area:ft;display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0;border-top:1px solid var(--brd);
+  font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:1.5px}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--t1);color:#000;padding:13px 28px;border-radius:100px;
+  font-family:var(--mono);font-size:11px;letter-spacing:2px;
+  z-index:9999;transition:transform .4s cubic-bezier(.23,1,.32,1);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr;grid-template-areas:"hd""pv""sb""ft";padding:0 16px}
+  .sidebar{border-left:none;border-top:1px solid var(--brd);padding:28px 0 0}
+  .preview-area{padding:28px 0}
+}
+</style>
 </head>
 <body>
+<div class="layout">
 
-<!-- CUSTOM CURSOR -->
-<div class="cursor" id="cursor"></div>
-<div class="cursor-trail" id="cursorTrail"></div>
-
-<!-- TOAST -->
-<div class="toast" id="toast">
-    <div class="toast-inner">
-        <span class="toast-icon">🏳️‍🌈</span>
-        <span id="toast-msg">URL COPIADA CON AMOR Y ORGULLO</span>
+  <header>
+    <div class="logo-mark">DEYLIN <em>SYSTEMS</em></div>
+    <div class="hpills">
+      <div class="pill">PRIDE BANNER LAB</div>
+      <div class="pill">GD ENGINE</div>
+      <div class="pill live">● ONLINE</div>
     </div>
-</div>
+  </header>
 
-<!-- BACKGROUND -->
-<div class="bg-canvas" id="bgCanvas">
-    <div class="pride-stripe"></div>
-    <div class="pride-stripe"></div>
-    <div class="pride-stripe"></div>
-    <div class="pride-stripe"></div>
-    <div class="pride-stripe"></div>
-    <div class="pride-stripe"></div>
-    <div id="particleContainer"></div>
-</div>
-
-<div class="page-wrapper">
-
-    <!-- HERO HEADER -->
-    <header class="hero-header reveal">
-        <div class="badge-pride">🏳️‍🌈 &nbsp; PRIDE EDITION &nbsp; • &nbsp; ULTRA LUXE &nbsp; • &nbsp; 2026</div>
-        <h1 class="main-title">
-            <span class="title-pride">DEYLIN</span>
-            <span class="title-systems">PRIDE &nbsp; SYSTEMS &nbsp; ENGINE &nbsp; V4.0</span>
-        </h1>
-        <p class="subtitle">♥ &nbsp; Love is Love &nbsp; • &nbsp; Banner Generation Lab &nbsp; • &nbsp; Premium ♥</p>
-    </header>
-
-    <!-- MAIN GRID -->
-    <div class="main-grid">
-
-        <!-- PREVIEW PANEL -->
-        <div class="preview-panel reveal" style="animation-delay: 0.2s;">
-            <div class="preview-label">LIVE PREVIEW</div>
-
-            <div class="preview-frame" id="previewFrame">
-                <img id="preview-img"
-                     src="?logo=<?= urlencode($img_predeterminada) ?>&estilo=1"
-                     alt="Banner Preview">
-                <div class="preview-loading" id="loadingOverlay">
-                    <span>⟳ &nbsp; GENERANDO CON AMOR...</span>
-                </div>
-            </div>
-
-            <div class="action-row">
-                <button class="btn btn-main" onclick="copyEndpoint()">
-                    🔗 &nbsp; COPIAR API URL
-                </button>
-                <button class="btn btn-secondary" onclick="openRaw()" title="Ver imagen directa">
-                    ↗ RAW
-                </button>
-                <button class="btn btn-secondary" onclick="downloadImg()" title="Descargar">
-                    ↓ DL
-                </button>
-            </div>
-
-            <!-- PRIDE FLAG + QUOTE SECTION -->
-            <div class="pride-banner-section" style="margin-top:20px;">
-                <div class="pride-flag-display">
-                    <div class="flag-stripe" style="background:#FF0018;"></div>
-                    <div class="flag-stripe" style="background:#FF8C00;"></div>
-                    <div class="flag-stripe" style="background:#FFED00;"></div>
-                    <div class="flag-stripe" style="background:#008026;"></div>
-                    <div class="flag-stripe" style="background:#004DFF;"></div>
-                    <div class="flag-stripe" style="background:#750787;"></div>
-                </div>
-                <div class="pride-quote" id="prideQuote">
-                    "No tienes que ser una persona diferente para ser amada. Eres perfecto tal como eres."
-                </div>
-                <div class="pride-tagline" id="prideStat">
-                    ♥ &nbsp; PRIDE · LOVE · IDENTITY · FREEDOM · EQUALITY &nbsp; ♥
-                </div>
-            </div>
-        </div>
-
-        <!-- STYLES SIDEBAR -->
-        <div class="styles-panel reveal" style="animation-delay: 0.4s;">
-            <div class="panel-header">
-                <h2 class="panel-title">Pride<br>Styles</h2>
-                <p class="panel-subtitle">10 presets de élite</p>
-            </div>
-
-            <div class="styles-list" id="stylesList">
-                <?php
-                $swatches = [
-                    1  => 'linear-gradient(135deg, #FF0018, #86007D)',
-                    2  => 'linear-gradient(135deg, #D60270, #9B4F96, #0038A8)',
-                    3  => 'linear-gradient(135deg, #FF0018, #FFA52C, #FFFF41, #008018, #0000F9)',
-                    4  => 'linear-gradient(135deg, #55CDFC, #F7A8B8, #FFFFFF, #F7A8B8, #55CDFC)',
-                    5  => 'linear-gradient(135deg, #00ff41, #ff00ff, #00aaff)',
-                    6  => 'linear-gradient(135deg, #D62900, #FF9B55, #FFFFFF, #D461A6, #A50062)',
-                    7  => 'linear-gradient(135deg, #2D0037, #5C0087, #000000)',
-                    8  => 'linear-gradient(135deg, #FF85E5, #FFB3F3, #E085FF, #C2A6FF)',
-                    9  => 'linear-gradient(135deg, #000000, #a4a4a4, #FFFFFF, #810081, #004DFF)',
-                    10 => 'linear-gradient(135deg, #FFDA00, #FFB100, #FF6600)',
-                ];
-                foreach ($presets_meta as $id => $meta):
-                ?>
-                <div class="style-card <?= $id===1?'active':'' ?>"
-                     onclick="changeStyle(<?= $id ?>)"
-                     id="card-<?= $id ?>">
-                    <span class="style-num"><?= str_pad($id, 2, '0', STR_PAD_LEFT) ?></span>
-                    <div class="style-swatch" style="background: <?= $swatches[$id] ?>;"></div>
-                    <div class="style-info">
-                        <div class="style-name"><?= $meta['label'] ?></div>
-                        <div class="style-desc"><?= $meta['desc'] ?></div>
-                    </div>
-                    <span class="style-arrow">›</span>
-                </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- URL INPUT -->
-            <div class="url-section">
-                <div class="input-label">Tu URL de Logo</div>
-                <div class="input-group">
-                    <input type="text"
-                           class="url-input"
-                           id="logoUrl"
-                           placeholder="https://tu-logo.com/imagen.png"
-                           value="<?= htmlspecialchars($img_predeterminada) ?>">
-                    <button class="btn-load" onclick="loadCustomLogo()" title="Cargar">🎨</button>
-                </div>
-            </div>
-        </div>
+  <main class="preview-area">
+    <div class="lbl">Live Preview</div>
+    <div class="preview-wrap" id="pw">
+      <img id="pi" src="?logo=<?=urlencode($img_default)?>&estilo=1" alt="preview">
+      <div class="loader">GENERANDO IMAGEN…</div>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="pride-footer reveal" style="animation-delay: 0.6s;">
-        <div class="footer-bar">
-            <div class="footer-brand">DEYLIN SYSTEMS</div>
-            <div class="footer-quote">❝ Programado con orgullo y amor ❞</div>
-            <div class="footer-tech">
-                <span class="tech-pill">PHP 8.5</span>
-                <span class="tech-pill">GD ENGINE</span>
-                <span class="tech-pill" style="color: #4ade80; border-color: rgba(74,222,128,0.3);">● ONLINE</span>
-            </div>
-        </div>
-    </footer>
+    <div class="action-bar">
+      <button class="btn btn-copy" onclick="copyEP()">↗ COPIAR URL DE LA API</button>
+      <button class="btn btn-sm" onclick="openRaw()">RAW</button>
+      <button class="btn btn-sm" onclick="dlImg()">⬇</button>
+    </div>
 
+    <div class="lbl">URL del logo</div>
+    <div class="url-row">
+      <input type="text" id="logoUrl" placeholder="https://tu-imagen.com/logo.png"
+             value="<?=htmlspecialchars($img_default)?>">
+      <button onclick="loadLogo()">CARGAR</button>
+    </div>
+
+    <div class="endpoint-box">
+      <strong>ENDPOINT API</strong>
+      <span id="epUrl"></span>
+    </div>
+  </main>
+
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-title">Estilos</div>
+      <div class="sidebar-sub">10 presets · pride edition</div>
+    </div>
+    <div class="styles-grid" id="sl">
+    <?php foreach($styles_meta as $id=>$m): ?>
+      <div class="sc <?=$id===1?'active':''?>" id="sc<?=$id?>" onclick="pick(<?=$id?>)">
+        <div class="sc-swatch">
+          <?php foreach($m['pal'] as $hx): ?>
+          <div class="sc-swatch-row" style="background:<?=$hx?>"></div>
+          <?php endforeach; ?>
+        </div>
+        <div class="sc-info">
+          <div class="sc-name"><?=$m['name']?></div>
+          <div class="sc-badge"><?=$m['badge']?></div>
+        </div>
+        <span class="sc-num"><?=str_pad($id,2,'0',STR_PAD_LEFT)?></span>
+        <span class="sc-arrow">›</span>
+      </div>
+    <?php endforeach; ?>
+    </div>
+  </aside>
+
+  <footer>
+    <span>BY DEYLIN © 2026</span>
+    <span>LOVE IS LOVE · PRIDE FOREVER</span>
+    <span>V4.1 · STABLE</span>
+  </footer>
 </div>
+<div class="toast" id="toast"></div>
 
 <script>
-    // === CURSOR ===
-    const cursor = document.getElementById('cursor');
-    const trail = document.getElementById('cursorTrail');
-    let trailX = 0, trailY = 0;
-    document.addEventListener('mousemove', e => {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-    });
-    setInterval(() => {
-        trail.style.left = trailX + 'px';
-        trail.style.top = trailY + 'px';
-    }, 50);
-    document.addEventListener('mousemove', e => { trailX = e.clientX; trailY = e.clientY; });
+let cur=1, logo=document.getElementById('logoUrl').value;
+const base=location.href.split('?')[0];
 
-    // === PARTÍCULAS ===
-    const colors = ['#FF0018','#FFA52C','#FFFF41','#008018','#0000F9','#86007D','#FF85E5','#55CDFC'];
-    const container = document.getElementById('particleContainer');
-    for (let i = 0; i < 40; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        const size = Math.random() * 8 + 2;
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        p.style.cssText = `
-            width: ${size}px; height: ${size}px;
-            background: ${color};
-            left: ${Math.random() * 100}%;
-            animation-duration: ${Math.random() * 15 + 10}s;
-            animation-delay: ${Math.random() * 10}s;
-            opacity: 0;
-        `;
-        container.appendChild(p);
-    }
+function url(l,s){return `${base}?logo=${encodeURIComponent(l)}&estilo=${s}`}
+function updateEP(){document.getElementById('epUrl').textContent=url(logo,cur)}
 
-    // === CORAZONES AL CLICK ===
-    document.addEventListener('click', e => {
-        for (let i = 0; i < 6; i++) {
-            const heart = document.createElement('div');
-            heart.innerHTML = ['❤️','🧡','💛','💚','💙','💜','🤍','🖤'][Math.floor(Math.random() * 8)];
-            heart.style.cssText = `
-                position: fixed;
-                left: ${e.clientX}px;
-                top: ${e.clientY}px;
-                pointer-events: none;
-                font-size: ${Math.random() * 20 + 10}px;
-                z-index: 9999;
-                animation: heartFloat 1.5s ease forwards;
-                transform: translate(-50%, -50%);
-            `;
-            document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 1500);
-        }
-    });
+function pick(id){
+  cur=id;
+  document.querySelectorAll('.sc').forEach(c=>c.classList.remove('active'));
+  document.getElementById('sc'+id).classList.add('active');
+  refresh();
+}
+function refresh(){
+  const pw=document.getElementById('pw'),img=document.getElementById('pi');
+  pw.classList.add('loading');
+  const t=new Image();
+  t.onload=()=>{img.src=url(logo,cur);pw.classList.remove('loading');updateEP()};
+  t.onerror=()=>pw.classList.remove('loading');
+  t.src=url(logo,cur);
+}
+function loadLogo(){
+  const v=document.getElementById('logoUrl').value.trim();
+  if(!v)return;logo=v;refresh();
+}
+function copyEP(){
+  navigator.clipboard.writeText(url(logo,cur)).then(()=>toast('URL COPIADA ✓'));
+}
+function openRaw(){window.open(url(logo,cur))}
+function dlImg(){const a=document.createElement('a');a.href=url(logo,cur);a.download=`pride_s${cur}.png`;a.click()}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
 
-    // Inject heart animation
-    const heartStyle = document.createElement('style');
-    heartStyle.textContent = `
-        @keyframes heartFloat {
-            0% { transform: translate(-50%,-50%) scale(0) rotate(${Math.random()*60-30}deg); opacity: 1; }
-            100% { transform: translate(${Math.random()*100-50}px, -100px) scale(1.5) rotate(${Math.random()*60-30}deg); opacity: 0; }
-        }
-    `;
-    document.head.appendChild(heartStyle);
-
-    // === STATE ===
-    let currentStyle = 1;
-    let currentLogo = document.getElementById('logoUrl').value;
-
-    // === PRIDE QUOTES ===
-    const quotes = [
-        '"No tienes que ser una persona diferente para ser amada. Eres perfecto tal como eres."',
-        '"El orgullo no es solo un mes. Es una vida entera de ser auténticamente tú."',
-        '"Amor es amor. Punto final. Sin excepciones. Sin condiciones."',
-        '"Sé quien hubieras querido conocer cuando eras pequeño."',
-        '"Tu identidad no es una fase. Es quien realmente eres."',
-        '"La libertad significa el derecho de ser quien eres, no quien te dicen que seas."',
-        '"Somos todos estrellas del arcoíris brillando en el mismo cielo."',
-        '"El mundo es más hermoso cuando todos podemos ser nosotros mismos."',
-    ];
-    let quoteIndex = 0;
-    setInterval(() => {
-        quoteIndex = (quoteIndex + 1) % quotes.length;
-        const el = document.getElementById('prideQuote');
-        el.style.opacity = '0';
-        el.style.transform = 'translateX(-10px)';
-        el.style.transition = 'all 0.4s ease';
-        setTimeout(() => {
-            el.textContent = quotes[quoteIndex];
-            el.style.opacity = '1';
-            el.style.transform = 'translateX(0)';
-        }, 400);
-    }, 5000);
-
-    // === CHANGE STYLE ===
-    function changeStyle(id) {
-        currentStyle = id;
-        document.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
-        document.getElementById('card-' + id).classList.add('active');
-
-        const img = document.getElementById('preview-img');
-        const loading = document.getElementById('loadingOverlay');
-        loading.style.display = 'flex';
-        img.style.opacity = '0.3';
-        img.style.transform = 'scale(0.98)';
-        img.style.transition = 'all 0.3s ease';
-
-        const newSrc = `?logo=${encodeURIComponent(currentLogo)}&estilo=${id}`;
-        const tempImg = new Image();
-        tempImg.onload = () => {
-            img.src = newSrc;
-            loading.style.display = 'none';
-            img.style.opacity = '1';
-            img.style.transform = 'scale(1)';
-        };
-        tempImg.onerror = () => {
-            loading.style.display = 'none';
-            img.style.opacity = '1';
-        };
-        tempImg.src = newSrc;
-    }
-
-    // === LOAD CUSTOM LOGO ===
-    function loadCustomLogo() {
-        const urlInput = document.getElementById('logoUrl');
-        const val = urlInput.value.trim();
-        if (!val) return;
-        currentLogo = val;
-        changeStyle(currentStyle);
-    }
-
-    // === COPY URL ===
-    function copyEndpoint() {
-        const url = `${window.location.href.split('?')[0]}?logo=${encodeURIComponent(currentLogo)}&estilo=${currentStyle}`;
-        navigator.clipboard.writeText(url).then(() => {
-            showToast('🏳️‍🌈', '¡URL COPIADA CON AMOR Y ORGULLO!');
-        });
-    }
-
-    function openRaw() {
-        window.open(`?logo=${encodeURIComponent(currentLogo)}&estilo=${currentStyle}`);
-    }
-
-    function downloadImg() {
-        const link = document.createElement('a');
-        link.href = `?logo=${encodeURIComponent(currentLogo)}&estilo=${currentStyle}`;
-        link.download = `deylin_pride_banner_style${currentStyle}.png`;
-        link.click();
-    }
-
-    // === TOAST ===
-    function showToast(icon, msg) {
-        const toast = document.getElementById('toast');
-        document.getElementById('toast-msg').textContent = msg;
-        toast.querySelector('.toast-icon').textContent = icon;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    // Enter en URL input
-    document.getElementById('logoUrl').addEventListener('keydown', e => {
-        if (e.key === 'Enter') loadCustomLogo();
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', e => {
-        if (e.key >= '1' && e.key <= '9') changeStyle(parseInt(e.key));
-        if (e.key === '0') changeStyle(10);
-    });
-
-    // Tooltip de atajos
-    setTimeout(() => showToast('⌨️', 'TRUCO: USA TECLAS 1-0 PARA CAMBIAR ESTILOS'), 3000);
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  const n=e.key==='0'?10:parseInt(e.key);
+  if(n>=1&&n<=10)pick(n);
+});
+document.getElementById('logoUrl').addEventListener('keydown',e=>{if(e.key==='Enter')loadLogo()});
+updateEP();
 </script>
 </body>
 </html>
-    <?php
-    exit;
+<?php
+exit;
 }
 
-// ====================================================
-// ===== ENGINE DE IMAGEN PRIDE ULTRA-PREMIUM ==========
-// ====================================================
+// ════════════════════════════════════════════════════════════════════
+//   API DE IMAGEN — genera PNG
+// ════════════════════════════════════════════════════════════════════
 
-$w = 1200; $h = 600;
-$canvas = imagecreatetruecolor($w, $h);
-imagealphablending($canvas, true);
-imagesavealpha($canvas, true);
+$W=1200; $H=600;
+$canvas=imagecreatetruecolor($W,$H);
+imagealphablending($canvas,true);
+imagesavealpha($canvas,true);
 
-// PALETA PRIDE
-$PRIDE = [
-    'red'    => [255, 0, 24],
-    'orange' => [255, 165, 44],
-    'yellow' => [255, 237, 0],
-    'green'  => [0, 128, 38],
-    'blue'   => [0, 77, 255],
-    'violet' => [117, 7, 135],
-    'trans_blue' => [85, 205, 252],
-    'trans_pink' => [247, 168, 184],
-    'white'  => [255, 255, 255],
-    'black'  => [0, 0, 0],
-    'bi_pink' => [214, 2, 112],
-    'bi_purple' => [155, 79, 150],
-    'bi_blue' => [0, 56, 168],
+// ── PALETA ────────────────────────────────────────────────────────
+$P=[
+  'red'      =>[255,  0, 24], 'orange'  =>[255,140,  0],
+  'yellow'   =>[255,237,  0], 'green'   =>[  0,128, 38],
+  'blue'     =>[  0, 77,255], 'violet'  =>[117,  7,135],
+  'transpink'=>[247,168,184], 'transblue'=>[85,205,252],
+  'white'    =>[255,255,255], 'black'   =>[  0,  0,  0],
+  'bipink'   =>[214,  2,112], 'bipurple'=>[155, 79,150],
+  'biblue'   =>[  0, 56,168], 'lesbred' =>[214, 41,  0],
+  'lesboran' =>[255,155, 85], 'lesbpink'=>[212, 97,166],
+  'lesbdpink'=>[165,  0, 98], 'gold'    =>[255,215,  0],
+  'brown'    =>[120, 79, 23], 'glpink'  =>[255,133,229],
+  'glpurp'   =>[212, 96,212],
 ];
 
-// PRESETS PRIDE
-$presets = [
-    1 => [ // PRIDE WAVE - Ondas arcoíris
-        'mode' => 'pride_wave',
-        'bg'   => [8, 5, 20],
-        'stripes' => ['red','orange','yellow','green','blue','violet'],
-        'accent' => [255, 50, 200],
-        'text_col' => [255, 255, 255],
-        'text_shadow' => [255, 0, 100],
-        'label' => 'PRIDE WAVE',
-    ],
-    2 => [ // BISEXUAL NEON
-        'mode' => 'bi_neon',
-        'bg'   => [10, 5, 30],
-        'stripes' => ['bi_pink','bi_pink','bi_purple','bi_blue','bi_blue'],
-        'accent' => [214, 2, 112],
-        'text_col' => [255, 220, 255],
-        'text_shadow' => [214, 2, 112],
-        'label' => 'BISEXUAL NEON',
-    ],
-    3 => [ // RAINBOW FIRE
-        'mode' => 'rainbow_fire',
-        'bg'   => [5, 0, 0],
-        'stripes' => ['violet','blue','green','yellow','orange','red'],
-        'accent' => [255, 100, 0],
-        'text_col' => [255, 255, 200],
-        'text_shadow' => [255, 80, 0],
-        'label' => 'RAINBOW FIRE',
-    ],
-    4 => [ // TRANS CIELO
-        'mode' => 'trans_sky',
-        'bg'   => [200, 230, 255],
-        'stripes' => ['trans_blue','trans_blue','trans_pink','trans_pink','white','white','trans_pink','trans_pink','trans_blue','trans_blue'],
-        'accent' => [85, 205, 252],
-        'text_col' => [30, 30, 80],
-        'text_shadow' => [85, 205, 252],
-        'label' => 'TRANS CIELO',
-    ],
-    5 => [ // QUEER VOLTAJE
-        'mode' => 'queer_volt',
-        'bg'   => [0, 5, 0],
-        'stripes' => ['green','blue','violet','bi_pink','orange'],
-        'accent' => [0, 255, 65],
-        'text_col' => [200, 255, 200],
-        'text_shadow' => [0, 255, 65],
-        'label' => 'QUEER VOLTAJE',
-    ],
-    6 => [ // LESBIAN SUNSET
-        'mode' => 'lesbian_sun',
-        'bg'   => [30, 5, 15],
-        'stripes' => ['red','orange','yellow','orange','red'], // tipo sunset lesbiana naranja-rosa
-        'accent' => [214, 41, 0],
-        'text_col' => [255, 220, 180],
-        'text_shadow' => [214, 41, 0],
-        'label' => 'LESBIAN SUNSET',
-    ],
-    7 => [ // DARK PRIDE
-        'mode' => 'dark_pride',
-        'bg'   => [5, 5, 5],
-        'stripes' => ['violet','blue','green','yellow','orange','red'],
-        'accent' => [168, 50, 200],
-        'text_col' => [255, 255, 255],
-        'text_shadow' => [100, 0, 150],
-        'label' => 'DARK PRIDE',
-    ],
-    8 => [ // GLITTER QUEEN
-        'mode' => 'glitter_queen',
-        'bg'   => [25, 5, 35],
-        'stripes' => ['violet','bi_pink','trans_pink','white','trans_pink','bi_pink','violet'],
-        'accent' => [255, 100, 255],
-        'text_col' => [255, 220, 255],
-        'text_shadow' => [255, 50, 255],
-        'label' => 'GLITTER QUEEN',
-    ],
-    9 => [ // PROGRESS FLAG
-        'mode' => 'progress',
-        'bg'   => [10, 10, 10],
-        'stripes' => ['red','orange','yellow','green','blue','violet'],
-        'accent' => [255, 255, 255],
-        'text_col' => [255, 255, 255],
-        'text_shadow' => [85, 205, 252],
-        'label' => 'PROGRESS FLAG',
-    ],
-    10 => [ // ROYAL PRIDE
-        'mode' => 'royal_pride',
-        'bg'   => [10, 5, 25],
-        'stripes' => ['violet','blue','green','yellow','orange','red'],
-        'accent' => [220, 190, 0],
-        'text_col' => [255, 240, 180],
-        'text_shadow' => [220, 180, 0],
-        'label' => 'ROYAL PRIDE',
-    ],
+// ── PRESETS ───────────────────────────────────────────────────────
+$presets=[
+  1 =>['st'=>['red','orange','yellow','green','blue','violet'],
+       'bg'=>[8,5,18],'ac'=>[200,80,255],
+       'bd'=>'SUPER PRIDE','bb'=>[200,0,80],'bf'=>[255,255,255],'nm'=>'PRIDE WAVE'],
+  2 =>['st'=>['bipink','bipink','bipurple','biblue','biblue'],
+       'bg'=>[10,5,28],'ac'=>[214,2,112],
+       'bd'=>'BI QUEEN','bb'=>[155,79,150],'bf'=>[255,255,255],'nm'=>'BISEXUAL NEON'],
+  3 =>['st'=>['violet','blue','green','yellow','orange','red'],
+       'bg'=>[5,0,0],'ac'=>[255,80,0],
+       'bd'=>'MEGA GAY','bb'=>[220,40,0],'bf'=>[255,255,0],'nm'=>'RAINBOW FIRE'],
+  4 =>['st'=>['transblue','transblue','transpink','transpink','white','transpink','transpink','transblue','transblue'],
+       'bg'=>[8,18,38],'ac'=>[85,205,252],
+       'bd'=>'TRANS ICON','bb'=>[85,205,252],'bf'=>[0,30,80],'nm'=>'TRANS CIELO'],
+  5 =>['st'=>['green','blue','violet','bipink','orange'],
+       'bg'=>[0,5,0],'ac'=>[0,255,100],
+       'bd'=>'QUEER ENERGY','bb'=>[0,180,70],'bf'=>[0,20,0],'nm'=>'QUEER VOLTAJE'],
+  6 =>['st'=>['lesbred','lesboran','white','lesbpink','lesbdpink'],
+       'bg'=>[25,5,10],'ac'=>[214,41,0],
+       'bd'=>'LESBI LEGEND','bb'=>[165,0,98],'bf'=>[255,255,255],'nm'=>'LESBIAN SUNSET'],
+  7 =>['st'=>['black','violet','blue','green','yellow','orange','red'],
+       'bg'=>[4,4,4],'ac'=>[150,50,200],
+       'bd'=>'SHADOW QUEEN','bb'=>[40,0,60],'bf'=>[200,150,255],'nm'=>'DARK PRIDE'],
+  8 =>['st'=>['glpink','glpurp','white','glpurp','glpink'],
+       'bg'=>[20,5,30],'ac'=>[255,100,255],
+       'bd'=>'GLITTER ICON','bb'=>[230,60,200],'bf'=>[255,255,255],'nm'=>'GLITTER QUEEN'],
+  9 =>['st'=>['black','brown','transblue','transpink','white','red','orange','yellow','green','blue','violet'],
+       'bg'=>[6,6,6],'ac'=>[255,255,255],
+       'bd'=>'ALLY AWARD','bb'=>[255,255,255],'bf'=>[0,0,0],'nm'=>'PROGRESS'],
+  10=>['st'=>['gold','orange','violet','blue','green'],
+       'bg'=>[10,8,2],'ac'=>[255,215,0],
+       'bd'=>'CROWN ROYAL','bb'=>[220,180,0],'bf'=>[0,0,0],'nm'=>'ROYAL PRIDE'],
 ];
 
-$cfg = $presets[$estilo] ?? $presets[1];
+$cfg=$presets[$estilo];
 
-// ---- FUNCIÓN HELPER COLORES ----
-function col($c, $img, $stripes, $PRIDE, $alpha = -1) {
-    $rgb = is_string($c) ? ($PRIDE[$c] ?? [255,255,255]) : $c;
-    if ($alpha >= 0)
-        return imagecolorallocatealpha($img, $rgb[0], $rgb[1], $rgb[2], $alpha);
-    return imagecolorallocate($img, $rgb[0], $rgb[1], $rgb[2]);
+// ── HELPERS ───────────────────────────────────────────────────────
+function c($img,$r,$g,$b,$a=-1){
+    return $a<0?imagecolorallocate($img,$r,$g,$b):imagecolorallocatealpha($img,$r,$g,$b,$a);
+}
+function rgb($key,&$P){return $P[$key]??[255,255,255];}
+
+function fillrect($img,$x1,$y1,$x2,$y2,$r,$col){
+    $r=min($r,abs($x2-$x1)/2,abs($y2-$y1)/2);
+    imagefilledrectangle($img,$x1+$r,$y1,$x2-$r,$y2,$col);
+    imagefilledrectangle($img,$x1,$y1+$r,$x2,$y2-$r,$col);
+    imagefilledellipse($img,$x1+$r,$y1+$r,$r*2,$r*2,$col);
+    imagefilledellipse($img,$x2-$r,$y1+$r,$r*2,$r*2,$col);
+    imagefilledellipse($img,$x1+$r,$y2-$r,$r*2,$r*2,$col);
+    imagefilledellipse($img,$x2-$r,$y2-$r,$r*2,$r*2,$col);
+}
+function strokerect($img,$x1,$y1,$x2,$y2,$r,$col){
+    $r=max(1,min($r,abs($x2-$x1)/2,abs($y2-$y1)/2));
+    imageline($img,$x1+$r,$y1,$x2-$r,$y1,$col);
+    imageline($img,$x1+$r,$y2,$x2-$r,$y2,$col);
+    imageline($img,$x1,$y1+$r,$x1,$y2-$r,$col);
+    imageline($img,$x2,$y1+$r,$x2,$y2-$r,$col);
+    imagearc($img,$x1+$r,$y1+$r,$r*2,$r*2,180,270,$col);
+    imagearc($img,$x2-$r,$y1+$r,$r*2,$r*2,270,360,$col);
+    imagearc($img,$x1+$r,$y2-$r,$r*2,$r*2,90,180,$col);
+    imagearc($img,$x2-$r,$y2-$r,$r*2,$r*2,0,90,$col);
 }
 
-// ---- FONDO BASE ----
-$bg_color = imagecolorallocate($canvas, $cfg['bg'][0], $cfg['bg'][1], $cfg['bg'][2]);
-imagefill($canvas, 0, 0, $bg_color);
+// ── FONDO OSCURO ─────────────────────────────────────────────────
+[$br,$bg_,$bb_]=($cfg['bg']);
+$BG=c($canvas,$br,$bg_,$bb_);
+imagefill($canvas,0,0,$BG);
 
-// ---- PRIDE STRIPES DIAGONALES DE FONDO ----
-$numStripes = count($cfg['stripes']);
-$stripeW = (int)($w / $numStripes);
+// ── BANDERA PRIDE — FRANJA INFERIOR ──────────────────────────────
+$st=$cfg['st'];
+$ns=count($st);
+$flagH=155;
+$flagY=$H-$flagH;
 
-// Primero, dibujar las franjas de la bandera como fondo semi-transparente diagonal
-for ($si = 0; $si < $numStripes; $si++) {
-    $rgb = is_string($cfg['stripes'][$si]) ? ($PRIDE[$cfg['stripes'][$si]] ?? [255,255,255]) : $cfg['stripes'][$si];
-    $sc = imagecolorallocatealpha($canvas, $rgb[0], $rgb[1], $rgb[2], 90);
-    $x1 = $si * $stripeW;
-    $x2 = ($si + 1) * $stripeW;
-    // Franja diagonal
-    $points = [$x1, 0, $x2, 0, $x2 + 80, $h, $x1 + 80, $h];
-    imagefilledpolygon($canvas, $points, $sc);
+for($si=0;$si<$ns;$si++){
+    [$sr,$sg,$sb]=rgb($st[$si],$P);
+    $sc=c($canvas,$sr,$sg,$sb);
+    $x1=(int)($si*$W/$ns); $x2=(int)(($si+1)*$W/$ns);
+    imagefilledrectangle($canvas,$x1,$flagY,$x2,$H,$sc);
 }
 
-// ---- FRANJA PRIDE INFERIOR SÓLIDA (bandera real) ----
-$flagH = 110;
-$flagY = $h - $flagH;
-for ($si = 0; $si < $numStripes; $si++) {
-    $rgb = is_string($cfg['stripes'][$si]) ? ($PRIDE[$cfg['stripes'][$si]] ?? [255,255,255]) : $cfg['stripes'][$si];
-    $sc = imagecolorallocate($canvas, $rgb[0], $rgb[1], $rgb[2]);
-    $x1 = (int)($si * $w / $numStripes);
-    $x2 = (int)(($si + 1) * $w / $numStripes);
-    imagefilledrectangle($canvas, $x1, $flagY, $x2, $h, $sc);
-}
-// Overlay oscuro sobre bandera inferior
-$flagOverlay = imagecolorallocatealpha($canvas, $cfg['bg'][0], $cfg['bg'][1], $cfg['bg'][2], 50);
-imagefilledrectangle($canvas, 0, $flagY, $w, $h, $flagOverlay);
-
-// ---- FRANJA PRIDE SUPERIOR SÓLIDA ----
-$topFlagH = 18;
-for ($si = 0; $si < $numStripes; $si++) {
-    $rgb = is_string($cfg['stripes'][$si]) ? ($PRIDE[$cfg['stripes'][$si]] ?? [255,255,255]) : $cfg['stripes'][$si];
-    $sc = imagecolorallocate($canvas, $rgb[0], $rgb[1], $rgb[2]);
-    $x1 = (int)($si * $w / $numStripes);
-    $x2 = (int)(($si + 1) * $w / $numStripes);
-    imagefilledrectangle($canvas, $x1, 0, $x2, $topFlagH, $sc);
+// Degradado oscuro sobre la bandera para legibilidad del texto
+for($y=$flagY;$y<$H;$y++){
+    $tt=($y-$flagY)/$flagH;
+    $al=(int)(20+$tt*50);
+    $ov=c($canvas,$br,$bg_,$bb_,$al);
+    imageline($canvas,0,$y,$W,$y,$ov);
 }
 
-// ---- GLOW CENTRAL ----
-$gc_r = $cfg['accent'][0]; $gc_g = $cfg['accent'][1]; $gc_b = $cfg['accent'][2];
-for ($r = 280; $r >= 10; $r -= 12) {
-    $al = (int)(127 - ($r / 280) * 127);
-    $al = min(127, $al + 100);
-    $gc = imagecolorallocatealpha($canvas, $gc_r, $gc_g, $gc_b, $al);
-    imagefilledellipse($canvas, $w/2, $h/2, $r, $r, $gc);
+// ── BANDERA PRIDE — FRANJA SUPERIOR (delgada decorativa) ─────────
+$topH=18;
+for($si=0;$si<$ns;$si++){
+    [$sr,$sg,$sb]=rgb($st[$si],$P);
+    $sc=c($canvas,$sr,$sg,$sb);
+    $x1=(int)($si*$W/$ns); $x2=(int)(($si+1)*$W/$ns);
+    imagefilledrectangle($canvas,$x1,0,$x2,$topH,$sc);
 }
 
-// ---- PARTÍCULAS FLOTANTES ----
-$prideColsKeys = ['red','orange','yellow','green','blue','violet','trans_blue','trans_pink'];
-for ($i = 0; $i < 80; $i++) {
-    $pk = $prideColsKeys[array_rand($prideColsKeys)];
-    $pr = $PRIDE[$pk];
-    $pc = imagecolorallocatealpha($canvas, $pr[0], $pr[1], $pr[2], rand(60, 110));
-    $ps = rand(1, 5);
-    imagefilledellipse($canvas, rand(0, $w), rand(0, $h), $ps, $ps, $pc);
+// Línea divisoria sutil
+$lineDiv=c($canvas,255,255,255,100);
+imageline($canvas,0,$flagY,$W,$flagY,$lineDiv);
+imageline($canvas,0,$flagY+1,$W,$flagY+1,c($canvas,0,0,0,80));
+
+// ── GLOW CENTRAL ─────────────────────────────────────────────────
+[$ar,$ag,$ab]=$cfg['ac'];
+$centerY=(int)(($flagY+$topH)/2);
+for($gr=350;$gr>=10;$gr-=16){
+    $ratio=$gr/350;
+    $al=(int)((1-$ratio)*42+100);
+    $al=min(127,$al);
+    $gc=c($canvas,$ar,$ag,$ab,$al);
+    imagefilledellipse($canvas,(int)($W/2),$centerY,$gr,(int)($gr*0.7),$gc);
 }
 
-// ---- LINEAS DECORATIVAS DIAGONALES ----
-for ($li = 0; $li < 6; $li++) {
-    $lk = $prideColsKeys[$li % count($prideColsKeys)];
-    $lr = $PRIDE[$lk];
-    $lc = imagecolorallocatealpha($canvas, $lr[0], $lr[1], $lr[2], 105);
-    $lx = $li * 220;
-    imageline($canvas, $lx, 0, $lx - 150, $h, $lc);
+// ── PARTÍCULAS SUTILES ───────────────────────────────────────────
+$prideKeys=['red','orange','yellow','green','blue','violet','transpink','transblue'];
+for($i=0;$i<55;$i++){
+    $pk=$prideKeys[array_rand($prideKeys)];
+    [$pr,$pg,$pb]=rgb($pk,$P);
+    $pcol=c($canvas,$pr,$pg,$pb,rand(75,115));
+    $ps=rand(1,3);
+    imagefilledellipse($canvas,rand(0,$W),rand($topH,$flagY),$ps,$ps,$pcol);
 }
 
-// ---- BORDE PRIDE ARCOÍRIS ----
-$bT = 12;
-for ($b = 0; $b < $bT; $b++) {
-    $bi = (int)(($b / $bT) * $numStripes);
-    $rgb = is_string($cfg['stripes'][$bi % $numStripes]) ? ($PRIDE[$cfg['stripes'][$bi % $numStripes]] ?? [255,255,255]) : $cfg['stripes'][$bi % $numStripes];
-    $alpha_border = max(0, 90 - $b * 7);
-    $bc = imagecolorallocatealpha($canvas, $rgb[0], $rgb[1], $rgb[2], $alpha_border);
-    imagerectangle($canvas, $b, $b, $w - $b - 1, $h - $b - 1, $bc);
-}
-
-// ---- LOGO: DESCARGAR Y COLOCAR ----
-$ch = curl_init($url_logo);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_USERAGENT => 'Mozilla/5.0',
-    CURLOPT_TIMEOUT => 10,
-    CURLOPT_FOLLOWLOCATION => true,
+// ── DESCARGAR LOGO ────────────────────────────────────────────────
+$ch=curl_init($url_logo);
+curl_setopt_array($ch,[
+    CURLOPT_RETURNTRANSFER=>true, CURLOPT_SSL_VERIFYPEER=>false,
+    CURLOPT_USERAGENT=>'Mozilla/5.0', CURLOPT_TIMEOUT=>12,
+    CURLOPT_FOLLOWLOCATION=>true,
 ]);
-$raw = curl_exec($ch);
+$raw=curl_exec($ch);
 curl_close($ch);
 
-$logo_size = 420;
-$logo_x = ($w - $logo_size) / 2;
-$logo_y = ($h - $logo_size) / 2 - 20;
+// ── LOGO EN CÍRCULO ───────────────────────────────────────────────
+$LD=320; // diámetro del círculo
+$LCX=(int)($W/2);
+$LCY=(int)(($flagY+$topH)/2);
+$LX=(int)($LCX-$LD/2);
+$LY=(int)($LCY-$LD/2);
 
-if ($raw) {
-    $logo_img = @imagecreatefromstring($raw);
-    if ($logo_img) {
-        $lw = imagesx($logo_img);
-        $lh = imagesy($logo_img);
+if($raw){
+    $src=@imagecreatefromstring($raw);
+    if($src){
+        $sw=imagesx($src);$sh=imagesy($src);
 
-        // Sombra del logo: varios círculos concéntricos con colores pride
-        $shadowColors = ['violet', 'blue', 'green', 'yellow', 'orange', 'red'];
-        foreach ($shadowColors as $si2 => $sk) {
-            $sr = $PRIDE[$sk];
-            $sar = imagecolorallocatealpha($canvas, $sr[0], $sr[1], $sr[2], 110 + $si2 * 2);
-            $shadowSize = $logo_size + 30 + $si2 * 8;
-            imagefilledellipse($canvas, $w/2, $h/2 - 20, $shadowSize, $shadowSize, $sar);
+        // Escalar a LD×LD
+        $scaled=imagecreatetruecolor($LD,$LD);
+        $trans=imagecolorallocatealpha($scaled,0,0,0,127);
+        imagefill($scaled,0,0,$trans);
+        imagealphablending($scaled,true);
+        imagesavealpha($scaled,true);
+        imagecopyresampled($scaled,$src,0,0,0,0,$LD,$LD,$sw,$sh);
+
+        // Recorte circular pixel a pixel
+        $circle=imagecreatetruecolor($LD,$LD);
+        imagealphablending($circle,false);
+        imagesavealpha($circle,true);
+        $fullT=imagecolorallocatealpha($circle,0,0,0,127);
+        imagefill($circle,0,0,$fullT);
+        imagealphablending($circle,true);
+
+        $r2=$LD/2;
+        for($py=0;$py<$LD;$py++){
+            for($px=0;$px<$LD;$px++){
+                if(sqrt(($px-$r2)**2+($py-$r2)**2)<=$r2){
+                    $pxc=imagecolorat($scaled,$px,$py);
+                    $rr=($pxc>>16)&0xFF;$gg=($pxc>>8)&0xFF;$bbb=$pxc&0xFF;
+                    imagesetpixel($circle,$px,$py,imagecolorallocate($circle,$rr,$gg,$bbb));
+                }
+            }
         }
 
-        // Sombra oscura
-        $shd = imagecolorallocatealpha($canvas, 0, 0, 0, 40);
-        imagefilledellipse($canvas, $w/2 + 8, $h/2 - 12, $logo_size + 20, $logo_size + 20, $shd);
-
-        // Colocar logo (cuadrado centrado)
-        imagecopyresampled($canvas, $logo_img, (int)$logo_x, (int)$logo_y, 0, 0, $logo_size, $logo_size, $lw, $lh);
-
-        // Anillos arcoíris alrededor del logo
-        for ($ri = 0; $ri < 6; $ri++) {
-            $rrgb = $PRIDE[$prideColsKeys[$ri]];
-            $ral = 80 + $ri * 6;
-            $rc = imagecolorallocatealpha($canvas, $rrgb[0], $rrgb[1], $rrgb[2], $ral);
-            $rs = $logo_size + 20 + $ri * 14;
-            imageellipse($canvas, $w/2, $h/2 - 20, $rs, $rs, $rc);
-            $rs2 = $logo_size + 22 + $ri * 14;
-            imageellipse($canvas, $w/2, $h/2 - 20, $rs2, $rs2, $rc);
+        // Anillos pride detrás del logo
+        $ringK=['violet','blue','green','yellow','orange','red'];
+        foreach($ringK as $ri=>$rk){
+            [$rr,$rg,$rb]=rgb($rk,$P);
+            $rc=c($canvas,$rr,$rg,$rb,92+$ri*3);
+            $rs=$LD+20+$ri*13;
+            imagefilledellipse($canvas,$LCX,$LCY,$rs,$rs,$rc);
         }
 
-        imagedestroy($logo_img);
+        // Sombra oscura del logo
+        $shd=c($canvas,0,0,0,55);
+        imagefilledellipse($canvas,$LCX+6,$LCY+7,$LD+14,$LD+14,$shd);
+
+        // Pegar círculo recortado
+        imagecopy($canvas,$circle,$LX,$LY,0,0,$LD,$LD);
+
+        // Borde blanco del círculo
+        $wring=c($canvas,255,255,255,60);
+        imageellipse($canvas,$LCX,$LCY,$LD+3,$LD+3,$wring);
+        imageellipse($canvas,$LCX,$LCY,$LD+5,$LD+5,$wring);
+        imageellipse($canvas,$LCX,$LCY,$LD+2,$LD+2,c($canvas,255,255,255,100));
+
+        imagedestroy($src);imagedestroy($scaled);imagedestroy($circle);
     }
 }
 
-// ---- TEXTO PRIDE LABEL ----
-// Caja de texto en la franja inferior
-$boxY = $flagY + 8;
-$boxH = $flagH - 16;
-$boxX = 80;
-$boxW = $w - 160;
+// ════════════════════════════════════════════════════════════
+//   BADGE / ETIQUETAS SOBRE LA IMAGEN
+// ════════════════════════════════════════════════════════════
 
-// Fondo de la caja de texto semi-transparente
-$boxBg = imagecolorallocatealpha($canvas, $cfg['bg'][0], $cfg['bg'][1], $cfg['bg'][2], 40);
-imagefilledrectangle($canvas, $boxX, $boxY, $boxX + $boxW, $boxY + $boxH, $boxBg);
+// ── BADGE 1: Nombre de estilo — esquina superior IZQUIERDA ───────
+$nm=strtoupper($cfg['nm']);
+$f4w=imagefontwidth(4);$f4h=imagefontheight(4);
+$bPX=16;$bPY=9;
+$b1W=$f4w*strlen($nm)+$bPX*2;$b1H=$f4h+$bPY*2;
+$b1X=24;$b1Y=$topH+18;
+// fondo translúcido
+$b1bg=c($canvas,0,0,0,55);
+fillrect($canvas,$b1X,$b1Y,$b1X+$b1W,$b1Y+$b1H,10,$b1bg);
+// borde blanco semitransparente
+$b1brd=c($canvas,255,255,255,80);
+strokerect($canvas,$b1X,$b1Y,$b1X+$b1W,$b1Y+$b1H,10,$b1brd);
+// texto blanco
+imagestring($canvas,4,$b1X+$bPX,$b1Y+$bPY,$nm,c($canvas,255,255,255));
 
-// Borde arcoíris de la caja
-for ($bri = 0; $bri < $numStripes; $bri++) {
-    $brrgb = is_string($cfg['stripes'][$bri]) ? ($PRIDE[$cfg['stripes'][$bri]] ?? [255,255,255]) : $cfg['stripes'][$bri];
-    $brc = imagecolorallocate($canvas, $brrgb[0], $brrgb[1], $brrgb[2]);
-    $segW = (int)($boxW / $numStripes);
-    $segX = $boxX + $bri * $segW;
-    imageline($canvas, $segX, $boxY, $segX + $segW, $boxY, $brc);
-    imageline($canvas, $segX, $boxY + $boxH, $segX + $segW, $boxY + $boxH, $brc);
+// ── BADGE 2: Premio especial — esquina superior DERECHA ───────────
+$bd=strtoupper($cfg['bd']);
+$b2W=$f4w*strlen($bd)+$bPX*2;$b2H=$f4h+$bPY*2;
+$b2X=$W-$b2W-24;$b2Y=$topH+18;
+[$bbr,$bbg,$bbb2]=$cfg['bb'];
+[$bfr,$bfg,$bfb]=$cfg['bf'];
+// sombra del badge
+$b2shd=c($canvas,0,0,0,80);
+fillrect($canvas,$b2X+3,$b2Y+3,$b2X+$b2W+3,$b2Y+$b2H+3,10,$b2shd);
+// fondo del badge con el color del preset
+$b2bg=c($canvas,$bbr,$bbg,$bbb2);
+fillrect($canvas,$b2X,$b2Y,$b2X+$b2W,$b2Y+$b2H,10,$b2bg);
+// texto
+imagestring($canvas,4,$b2X+$bPX,$b2Y+$bPY,$bd,c($canvas,$bfr,$bfg,$bfb));
+
+// ── BADGE 3: "DEYLIN SYSTEMS" — centro sobre la bandera inferior ──
+$mainTxt='DEYLIN SYSTEMS';
+$f5w=imagefontwidth(5);$f5h=imagefontheight(5);
+$mW=$f5w*strlen($mainTxt);
+$mX=(int)(($W-$mW)/2);
+$mY=$flagY+20;
+// sombra
+imagestring($canvas,5,$mX+2,$mY+2,$mainTxt,c($canvas,0,0,0,40));
+// texto blanco brillante
+imagestring($canvas,5,$mX,$mY,$mainTxt,c($canvas,255,255,255));
+
+// ── BADGE 4: "LOVE IS LOVE · PRIDE 2026" — debajo del nombre ─────
+$sub='LOVE IS LOVE  ·  PRIDE 2026';
+$sW=$f4w*strlen($sub);
+$sX=(int)(($W-$sW)/2);
+$sY=$mY+$f5h+6;
+// fondo semi para legibilidad
+$sBg=c($canvas,0,0,0,65);
+imagefilledrectangle($canvas,$sX-10,$sY-3,$sX+$sW+10,$sY+$f4h+3,$sBg);
+imagestring($canvas,4,$sX,$sY,$sub,c($canvas,$ar,$ag,$ab));
+
+// ── BADGE 5: "★ PREMIUM PRIDE ★" pequeño — lateral izquierdo ─────
+$side='* PREMIUM PRIDE *';
+$sideW=$f4w*strlen($side);
+$sideX=20;
+$sideY=(int)(($flagY+$topH)/2)-$f4h/2;
+// solo si no choca con el logo (logo centrado)
+if($sideX+$sideW < $LX-20){
+    $sdBg=c($canvas,0,0,0,75);
+    fillrect($canvas,$sideX-8,$sideY-6,$sideX+$sideW+8,$sideY+$f4h+6,8,$sdBg);
+    imagestring($canvas,4,$sideX,$sideY,$side,c($canvas,$ar,$ag,$ab));
 }
 
-// Texto principal "DEYLIN PRIDE SYSTEMS"
-$mainText = "DEYLIN PRIDE SYSTEMS";
-$textColor = imagecolorallocate($canvas, $cfg['text_col'][0], $cfg['text_col'][1], $cfg['text_col'][2]);
-$textShadow = imagecolorallocate($canvas, $cfg['text_shadow'][0], $cfg['text_shadow'][1], $cfg['text_shadow'][2]);
-
-// Calcular centrado del texto
-$font = 5; // fuente GD más grande
-$charW = 9; // ancho aprox por char con font 5
-$textLen = strlen($mainText) * $charW;
-$tx = (int)(($w - $textLen) / 2);
-$ty = $boxY + 15;
-
-// Sombra del texto (desplazada)
-imagestring($canvas, $font, $tx + 2, $ty + 2, $mainText, $textShadow);
-imagestring($canvas, $font, $tx, $ty, $mainText, $textColor);
-
-// Sub-texto con el label del estilo
-$subText = "♥  " . $cfg['label'] . "  ♥  LOVE IS LOVE  ♥  PRIDE 2026  ♥";
-$subLen = strlen($subText) * 7; // font 4: ~7px/char
-$sx = (int)(($w - $subLen) / 2);
-$sy = $ty + 28;
-$subCol = imagecolorallocatealpha($canvas, $cfg['text_col'][0], $cfg['text_col'][1], $cfg['text_col'][2], 30);
-imagestring($canvas, 4, $sx, $sy, $subText, $subCol);
-
-// ---- DECORACIÓN: PEQUEÑAS ESTRELLAS/DESTELLOS ----
-for ($star = 0; $star < 30; $star++) {
-    $sk = $prideColsKeys[array_rand($prideColsKeys)];
-    $sr = $PRIDE[$sk];
-    $sc2 = imagecolorallocatealpha($canvas, $sr[0], $sr[1], $sr[2], rand(50, 100));
-    $sx2 = rand(20, $w - 20);
-    $sy2 = rand(20, $flagY - 20);
-    $ss = rand(1, 3);
-    imagefilledellipse($canvas, $sx2, $sy2, $ss, $ss, $sc2);
-    // Cruz pequeña (destello)
-    imageline($canvas, $sx2 - $ss*2, $sy2, $sx2 + $ss*2, $sy2, $sc2);
-    imageline($canvas, $sx2, $sy2 - $ss*2, $sx2, $sy2 + $ss*2, $sc2);
+// ── BADGE 6: mismo del lado DERECHO ──────────────────────────────
+$sideR='DEYLIN © 2026';
+$sideRW=$f4w*strlen($sideR);
+$sideRX=$W-$sideRW-20;
+if($sideRX > $LX+$LD+20){
+    $sdBg2=c($canvas,0,0,0,75);
+    fillrect($canvas,$sideRX-8,$sideY-6,$sideRX+$sideRW+8,$sideY+$f4h+6,8,$sdBg2);
+    imagestring($canvas,4,$sideRX,$sideY,$sideR,c($canvas,255,255,255,30));
+    imagestring($canvas,4,$sideRX,$sideY,$sideR,c($canvas,$ar,$ag,$ab));
 }
 
-// ---- OUTPUT ----
+// ── BORDE ARCOÍRIS EXTERIOR ───────────────────────────────────────
+for($si=0;$si<$ns;$si++){
+    [$sr,$sg,$sb]=rgb($st[$si],$P);
+    $sc=c($canvas,$sr,$sg,$sb);
+    $x1=(int)($si*$W/$ns);$x2=(int)(($si+1)*$W/$ns);
+    // borde inferior
+    imageline($canvas,$x1,$H-1,$x2,$H-1,$sc);
+    imageline($canvas,$x1,$H-2,$x2,$H-2,$sc);
+}
+// bordes laterales
+for($si=0;$si<$ns;$si++){
+    [$sr,$sg,$sb]=rgb($st[$si],$P);
+    $sc=c($canvas,$sr,$sg,$sb);
+    $y1=(int)($si*$H/$ns);$y2=(int)(($si+1)*$H/$ns);
+    imageline($canvas,0,$y1,0,$y2,$sc);
+    imageline($canvas,1,$y1,1,$y2,$sc);
+    imageline($canvas,$W-1,$y1,$W-1,$y2,$sc);
+    imageline($canvas,$W-2,$y1,$W-2,$y2,$sc);
+}
+
+// ── OUTPUT ────────────────────────────────────────────────────────
 header('Content-Type: image/png');
 header('Cache-Control: public, max-age=3600');
-imagepng($canvas, null, 6);
+imagepng($canvas,null,6);
 imagedestroy($canvas);
-?>
