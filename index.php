@@ -33,6 +33,13 @@ $badge_text     = urldecode($_GET['badge'] ?? '');
 $watermark      = urldecode($_GET['wm']    ?? 'deylin.systems');
 $output_format  = strtolower($_GET['fmt']  ?? 'png');
 $quality        = min(100, max(10, (int)($_GET['q'] ?? 90)));
+// Nuevos params — también leídos aquí para el dashboard
+$_bg_param   = urldecode($_GET['bg']  ?? '');
+$_c1_param   = $_GET['c1']  ?? '';
+$_c2_param   = $_GET['c2']  ?? '';
+$_bgc_param  = $_GET['bgc'] ?? '';
+$_bgo_param  = (int)($_GET['bgo'] ?? 60);
+$_shape_param= $_GET['shape'] ?? 'circle';
 
 $img_predeterminada = "https://ik.imagekit.io/pm10ywrf6f/bot_by_deylin/1769830823123_e336030d2dfd15b3f2a9bec8d30e15f3_YZEsD9KKM.jpg";
 
@@ -514,6 +521,56 @@ if (empty($url_logo)) {
         </div>
       </div>
 
+      <!-- Colores Custom -->
+      <div class="glass glass-sm">
+        <div class="section-title">COLORES PERSONALIZADOS</div>
+        <div class="row-2">
+          <div class="field-group">
+            <label>ACENTO 1 (c1)</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="color" id="i-c1" value="#a855f7" style="width:36px;height:36px;border:none;background:none;cursor:pointer;border-radius:6px;padding:0" oninput="renderCanvas()">
+              <input type="text" id="i-c1t" value="#a855f7" style="flex:1" oninput="document.getElementById('i-c1').value=this.value;renderCanvas()">
+            </div>
+          </div>
+          <div class="field-group">
+            <label>ACENTO 2 (c2)</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="color" id="i-c2" value="#ec4899" style="width:36px;height:36px;border:none;background:none;cursor:pointer;border-radius:6px;padding:0" oninput="renderCanvas()">
+              <input type="text" id="i-c2t" value="#ec4899" style="flex:1" oninput="document.getElementById('i-c2').value=this.value;renderCanvas()">
+            </div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>COLOR DE FONDO (bgc)</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="color" id="i-bgc" value="#0a0a1a" style="width:36px;height:36px;border:none;background:none;cursor:pointer;border-radius:6px;padding:0" oninput="renderCanvas()">
+            <input type="text" id="i-bgct" value="#0a0a1a" style="flex:1" oninput="document.getElementById('i-bgc').value=this.value;renderCanvas()">
+            <div class="fmt-btn" onclick="resetColors()" style="white-space:nowrap;flex:none">↺ Reset</div>
+          </div>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <label>FORMA DEL AVATAR</label>
+          <div style="display:flex;gap:8px">
+            <div class="fmt-btn active" id="sh-circle" onclick="setShape('circle',this)">⬤ Círculo</div>
+            <div class="fmt-btn" id="sh-square" onclick="setShape('square',this)">⬛ Cuadrado</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Imagen de Fondo -->
+      <div class="glass glass-sm">
+        <div class="section-title">IMAGEN DE FONDO</div>
+        <div class="field-group">
+          <label>URL IMAGEN DE FONDO (bg)</label>
+          <input type="url" id="i-bg" placeholder="https://... (jpeg, png, gif)" oninput="loadBgImage(this.value)">
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <label>OPACIDAD: <span id="lbl-bgo">60</span>%</label>
+          <input type="range" id="i-bgo" min="0" max="100" value="60"
+            oninput="document.getElementById('lbl-bgo').textContent=this.value;renderCanvas()">
+        </div>
+      </div>
+
       <!-- Acciones rápidas -->
       <div class="glass glass-sm">
         <div class="section-title">ACCIONES</div>
@@ -572,8 +629,11 @@ const PRESETS = [
 
 let currentStyle = 1;
 let currentFmt   = 'png';
-let avatarImg    = null;   // ImageBitmap del avatar cargado
+let avatarImg    = null;
 let avatarUrl    = '';
+let bgImg        = null;   // ImageBitmap imagen de fondo
+let bgImgUrl     = '';
+let currentShape = 'circle';  // circle | square
 
 // ============================================================
 // Render style cards
@@ -619,9 +679,13 @@ function renderCanvas() {
   previewCanvas.height = H;
 
   const p    = PRESETS[currentStyle-1] || PRESETS[0];
-  const bg   = hexToRgb(p.bg);
-  const acc  = hexToRgb(p.acc);
-  const acc2 = hexToRgb(p.acc2);
+  // Custom color overrides
+  const c1hex = document.getElementById('i-c1')?.value || p.acc;
+  const c2hex = document.getElementById('i-c2')?.value || p.acc2;
+  const bgchex= document.getElementById('i-bgc')?.value || p.bg;
+  const bg   = hexToRgb(bgchex);
+  const acc  = hexToRgb(c1hex);
+  const acc2 = hexToRgb(c2hex);
 
   // --- FONDO gradient ---
   const bgGrad = ctx.createLinearGradient(0,0,0,H);
@@ -638,6 +702,20 @@ function renderCanvas() {
     const step = Math.round(W/24);
     for(let x=0; x<W; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
     for(let y=0; y<H; y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  }
+
+  // --- IMAGEN DE FONDO ---
+  const bgOpacity = (parseInt(document.getElementById('i-bgo')?.value || '60')) / 100;
+  if (bgImg && bgOpacity > 0) {
+    ctx.save();
+    ctx.globalAlpha = bgOpacity;
+    // Cover: escalar para cubrir todo
+    const scaleX = W / bgImg.width, scaleY = H / bgImg.height;
+    const sc = Math.max(scaleX, scaleY);
+    const sw = bgImg.width * sc, sh = bgImg.height * sc;
+    const ox = (W - sw) / 2, oy = (H - sh) / 2;
+    ctx.drawImage(bgImg, ox, oy, sw, sh);
+    ctx.restore();
   }
 
   // --- GLOW 1 (acc) ---
@@ -725,7 +803,11 @@ function renderCanvas() {
     ctx.shadowColor = `rgba(${acc.r},${acc.g},${acc.b},0.5)`;
     ctx.shadowBlur  = 40;
     ctx.beginPath();
-    ctx.arc(avCx, avCy, r+2, 0, Math.PI*2);
+    if (currentShape === 'square') {
+      ctx.rect(avCx-r, avCy-r, diam, diam);
+    } else {
+      ctx.arc(avCx, avCy, r+2, 0, Math.PI*2);
+    }
     ctx.clip();
     ctx.drawImage(avatarImg, avCx-r, avCy-r, diam, diam);
     ctx.restore();
@@ -958,12 +1040,20 @@ function buildUrl() {
   const scanlines = document.getElementById('e-scanlines').checked?1:0;
   const glitch  = document.getElementById('e-glitch').checked?1:0;
 
+  const c1   = document.getElementById('i-c1').value.replace('#','');
+  const c2   = document.getElementById('i-c2').value.replace('#','');
+  const bgc  = document.getElementById('i-bgc').value.replace('#','');
+  const bg   = document.getElementById('i-bg')?.value || '';
+  const bgo  = document.getElementById('i-bgo')?.value || '60';
+
   const base = window.location.pathname;
   const params = new URLSearchParams({
     logo, estilo: currentStyle, t1, t2, sub, badge, wm,
     w, h, r, ax, ay, particles, lines, noise, grid, scanlines, glitch,
     fmt: currentFmt, q,
-    fs1, fs2, fs3
+    fs1, fs2, fs3,
+    c1, c2, bgc, bg, bgo,
+    shape: currentShape
   });
   return `${base}?${params.toString()}`;
 }
@@ -1033,7 +1123,74 @@ function resetAll() {
   document.getElementById('e-grid').checked = false;
   document.getElementById('e-scanlines').checked = false;
   document.getElementById('e-glitch').checked = false;
+  document.getElementById('i-bg').value = '';
+  document.getElementById('i-bgo').value = 60;
+  document.getElementById('lbl-bgo').textContent = 60;
+  bgImg = null;
+  currentShape = 'circle';
+  document.getElementById('sh-circle').classList.add('active');
+  document.getElementById('sh-square').classList.remove('active');
   changeStyle(1);
+}
+
+// Load background image
+let bgLoadTimer;
+function loadBgImage(url) {
+  clearTimeout(bgLoadTimer);
+  bgLoadTimer = setTimeout(() => {
+    if (!url) { bgImg = null; renderCanvas(); return; }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      createImageBitmap(img).then(bmp => { bgImg = bmp; renderCanvas(); });
+    };
+    img.onerror = () => { bgImg = null; renderCanvas(); };
+    img.src = url;
+  }, 500);
+}
+
+// Shape toggle
+function setShape(shape, el) {
+  currentShape = shape;
+  document.querySelectorAll('#sh-circle,#sh-square').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderCanvas();
+}
+
+// Sync color text inputs with pickers
+document.addEventListener('DOMContentLoaded', () => {
+  ['c1','c2','bgc'].forEach(id => {
+    const picker = document.getElementById('i-'+id);
+    const text   = document.getElementById('i-'+id+'t');
+    if(picker&&text) {
+      picker.addEventListener('input', () => { text.value = picker.value; renderCanvas(); });
+      text.addEventListener('input', () => {
+        if(/^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+        renderCanvas();
+      });
+    }
+  });
+});
+
+// Reset colors to match current preset
+function resetColors() {
+  const p = PRESETS[currentStyle-1] || PRESETS[0];
+  document.getElementById('i-c1').value  = p.acc;
+  document.getElementById('i-c1t').value = p.acc;
+  document.getElementById('i-c2').value  = p.acc2;
+  document.getElementById('i-c2t').value = p.acc2;
+  document.getElementById('i-bgc').value = p.bg;
+  document.getElementById('i-bgct').value= p.bg;
+  renderCanvas();
+}
+
+// When style changes, also reset colors
+const _origChangeStyle = changeStyle;
+function changeStyle(id) {
+  document.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+  document.getElementById(`sc-${id}`)?.classList.add('active');
+  currentStyle = id;
+  resetColors();  // sync colors with new preset
 }
 
 function showToast(msg) {
@@ -1062,12 +1219,30 @@ function switchTab(name) {
 }
 
 // ============================================================
-// ENGINE DE GENERACIÓN DE IMAGEN
+// ENGINE DE GENERACIÓN DE IMAGEN — V5.1 STABLE
+// Fixes: color palette exhaustion, 500 errors, bg image, custom colors
 // ============================================================
 
+// --- Parámetros adicionales nuevos ---
+$url_bg_img  = urldecode($_GET['bg']   ?? '');   // URL imagen de fondo
+$c1_hex      = $_GET['c1'] ?? '';                 // Color acento 1 custom (#rrggbb)
+$c2_hex      = $_GET['c2'] ?? '';                 // Color acento 2 custom (#rrggbb)
+$bg_hex      = $_GET['bgc'] ?? '';                // Color fondo custom (#rrggbb)
+$bg_opacity  = min(100, max(0, (int)($_GET['bgo'] ?? 60))); // Opacidad imagen fondo %
+$shape       = $_GET['shape'] ?? 'circle';        // circle | square | hex
+
+// Helper hex → rgb
+function hex2rgb($hex) {
+    $hex = ltrim($hex, '#');
+    if (strlen($hex) === 3) $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+    return [hexdec(substr($hex,0,2)), hexdec(substr($hex,2,2)), hexdec(substr($hex,4,2))];
+}
+
 $w = $width; $h = $height;
+
+// Usamos imageCreateTruecolor — sin límite de colores (modo directo)
 $canvas = imagecreatetruecolor($w, $h);
-imagealphablending($canvas, true);
+imagealphablending($canvas, false);
 imagesavealpha($canvas, true);
 
 // ---- PALETA DE 20 PRESETS ----
@@ -1095,351 +1270,536 @@ $presets = [
 ];
 
 $cfg = $presets[$estilo] ?? $presets[1];
-[$br,$bg,$bb] = $cfg['bg'];
-[$ar,$ag,$ab] = $cfg['acc'];
-[$a2r,$a2g,$a2b] = $cfg['acc2'];
+[$br,$bg_r,$bb] = $cfg['bg'];
+[$ar,$ag,$ab]   = $cfg['acc'];
+[$a2r,$a2g,$a2b]= $cfg['acc2'];
 
-// === FONDO con degradado vertical ===
+// Override con colores custom si se pasan
+if ($c1_hex && strlen($c1_hex) >= 6) [$ar,$ag,$ab]    = hex2rgb($c1_hex);
+if ($c2_hex && strlen($c2_hex) >= 6) [$a2r,$a2g,$a2b] = hex2rgb($c2_hex);
+if ($bg_hex && strlen($bg_hex) >= 6) [$br,$bg_r,$bb]   = hex2rgb($bg_hex);
+
+// ============================================================
+// HELPER: dibuja pixel con alpha de forma segura en TrueColor
+// En modo TrueColor el color se codifica directamente
+// ============================================================
+function tc($r,$g,$b,$a=0) {
+    // alpha GD: 0=opaco, 127=transparente
+    return (($a & 0x7F) << 24) | (($r & 0xFF) << 16) | (($g & 0xFF) << 8) | ($b & 0xFF);
+}
+function gdAlpha($opacity_0_1) {
+    // opacity 0.0 (transparent) → 1.0 (opaque)  →  GD alpha 127 → 0
+    return (int)(127 - $opacity_0_1 * 127);
+}
+
+// ============================================================
+// PASO 1: FONDO
+// ============================================================
+imagealphablending($canvas, false);
+// Rellenar con color sólido base
 for($y=0; $y<$h; $y++) {
     $t = $y/$h;
-    // Mezcla fondo base con un tono más oscuro arriba
-    $r = (int)($br + ($br*0.5)*$t);
-    $g = (int)($bg + ($bg*0.5)*$t);
-    $b = (int)($bb + ($bb*0.5)*$t);
-    $col = imagecolorallocate($canvas, min(255,$r), min(255,$g), min(255,$b));
-    imageline($canvas, 0, $y, $w-1, $y, $col);
+    $r = min(255, (int)($br * (1 + 0.4*$t)));
+    $g = min(255, (int)($bg_r * (1 + 0.4*$t)));
+    $b = min(255, (int)($bb * (1 + 0.4*$t)));
+    $col = tc($r,$g,$b,0);
+    imagefilledrectangle($canvas, 0, $y, $w-1, $y, $col);
 }
 
-// === EFECTO GRID DE FONDO ===
+// ============================================================
+// PASO 2: IMAGEN DE FONDO (si se pasa URL)
+// ============================================================
+if (!empty($url_bg_img)) {
+    $ch2 = curl_init($url_bg_img);
+    curl_setopt_array($ch2, [
+        CURLOPT_RETURNTRANSFER => 1,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0',
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_TIMEOUT        => 8,
+    ]);
+    $raw_bg = curl_exec($ch2);
+    curl_close($ch2);
+    if ($raw_bg) {
+        $bg_img = @imagecreatefromstring($raw_bg);
+        if ($bg_img) {
+            // Escalar para cubrir todo el canvas (cover)
+            $bw = imagesx($bg_img); $bh = imagesy($bg_img);
+            $scale = max($w/$bw, $h/$bh);
+            $sw = (int)($bw*$scale); $sh = (int)($bh*$scale);
+            $ox = (int)(($w-$sw)/2); $oy = (int)(($h-$sh)/2);
+            // Dibujar imagen de fondo escalada
+            $bg_layer = imagecreatetruecolor($w, $h);
+            imagealphablending($bg_layer, false);
+            imagecopyresampled($bg_layer, $bg_img, $ox, $oy, 0, 0, $sw, $sh, $bw, $bh);
+            imagedestroy($bg_img);
+            // Blend sobre canvas con opacidad
+            $opa = $bg_opacity / 100.0;
+            imagealphablending($canvas, true);
+            $src_alpha = gdAlpha($opa);
+            for($py=0; $py<$h; $py++) {
+                for($px_=0; $px_<$w; $px_++) {
+                    $src_px = imagecolorat($bg_layer, $px_, $py);
+                    $sr = ($src_px >> 16) & 0xFF;
+                    $sg = ($src_px >> 8)  & 0xFF;
+                    $sb = $src_px & 0xFF;
+                    $dst_px = imagecolorat($canvas, $px_, $py);
+                    $dr = ($dst_px >> 16) & 0xFF;
+                    $dg = ($dst_px >> 8)  & 0xFF;
+                    $db = $dst_px & 0xFF;
+                    $nr = (int)($dr*(1-$opa) + $sr*$opa);
+                    $ng = (int)($dg*(1-$opa) + $sg*$opa);
+                    $nb = (int)($db*(1-$opa) + $sb*$opa);
+                    imagesetpixel($canvas, $px_, $py, tc($nr,$ng,$nb,0));
+                }
+            }
+            imagedestroy($bg_layer);
+        }
+    }
+}
+
+imagealphablending($canvas, true);
+
+// ============================================================
+// PASO 3: GRID
+// ============================================================
 if ($show_grid) {
-    $gc = imagecolorallocatealpha($canvas, $ar, $ag, $ab, 120);
-    $step = (int)($w / 24);
-    for($gx=0; $gx<$w; $gx+=$step) imageline($canvas, $gx, 0, $gx, $h-1, $gc);
-    for($gy=0; $gy<$h; $gy+=$step) imageline($canvas, 0, $gy, $w-1, $gy, $gc);
+    $step = max(20, (int)($w/24));
+    for($gx=0; $gx<$w; $gx+=$step) {
+        imagesetpixel($canvas, $gx, 0, 0); // dummy to avoid unused warning
+        for($gy=0; $gy<$h; $gy++) {
+            $existing = imagecolorat($canvas, $gx, $gy);
+            $er = ($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+            $nr = min(255,(int)($er+$ar*0.06)); $ng=min(255,(int)($eg+$ag*0.06)); $nb=min(255,(int)($eb+$ab*0.06));
+            imagesetpixel($canvas, $gx, $gy, tc($nr,$ng,$nb,0));
+        }
+    }
+    for($gy=0; $gy<$h; $gy+=$step) {
+        for($gx=0; $gx<$w; $gx++) {
+            $existing = imagecolorat($canvas, $gx, $gy);
+            $er = ($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+            $nr = min(255,(int)($er+$ar*0.06)); $ng=min(255,(int)($eg+$ag*0.06)); $nb=min(255,(int)($eb+$ab*0.06));
+            imagesetpixel($canvas, $gx, $gy, tc($nr,$ng,$nb,0));
+        }
+    }
 }
 
-// === GLOW RADIAL CENTRAL (pintado línea a línea) ===
-$cx = (int)($w * 0.65);
-$cy = (int)($h * 0.5);
-$glow_r = (int)(max($w,$h) * 0.6);
-for($i=$glow_r; $i>0; $i-=4) {
-    $alpha = (int)(127 - (($glow_r - $i) / $glow_r) * 127 * 0.7);
-    $alpha = max(100, $alpha);
-    $gf = imagecolorallocatealpha($canvas, $ar, $ag, $ab, $alpha);
-    imagefilledellipse($canvas, $cx, $cy, $i*2, $i*2, $gf);
+// ============================================================
+// PASO 4: GLOW RADIAL (blend manual, sin imagecolorallocatealpha)
+// ============================================================
+// Glow 1 (acento acc) — centro derecho
+$g1cx = (int)($w*0.65); $g1cy = (int)($h*0.5); $g1r = (int)(max($w,$h)*0.55);
+for($py=0; $py<$h; $py++) {
+    for($px_=0; $px_<$w; $px_++) {
+        $dist = sqrt(($px_-$g1cx)**2 + ($py-$g1cy)**2);
+        if ($dist >= $g1r) continue;
+        $intensity = (1 - $dist/$g1r) * 0.18;
+        $existing  = imagecolorat($canvas, $px_, $py);
+        $er=($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+        $nr=min(255,(int)($er*(1-$intensity)+$ar*$intensity));
+        $ng=min(255,(int)($eg*(1-$intensity)+$ag*$intensity));
+        $nb=min(255,(int)($eb*(1-$intensity)+$ab*$intensity));
+        imagesetpixel($canvas, $px_, $py, tc($nr,$ng,$nb,0));
+    }
+}
+// Glow 2 (acc2) — esquina superior izquierda
+$g2cx = (int)($w*0.28); $g2cy = (int)($h*0.2); $g2r = (int)(max($w,$h)*0.38);
+for($py=0; $py<$h; $py++) {
+    for($px_=0; $px_<$w; $px_++) {
+        $dist = sqrt(($px_-$g2cx)**2 + ($py-$g2cy)**2);
+        if ($dist >= $g2r) continue;
+        $intensity = (1 - $dist/$g2r) * 0.14;
+        $existing  = imagecolorat($canvas, $px_, $py);
+        $er=($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+        $nr=min(255,(int)($er*(1-$intensity)+$a2r*$intensity));
+        $ng=min(255,(int)($eg*(1-$intensity)+$a2g*$intensity));
+        $nb=min(255,(int)($eb*(1-$intensity)+$a2b*$intensity));
+        imagesetpixel($canvas, $px_, $py, tc($nr,$ng,$nb,0));
+    }
 }
 
-// === SEGUNDO GLOW ACC2 ===
-$gx2 = (int)($w * 0.3);
-$gy2 = (int)($h * 0.2);
-$gr2 = (int)(max($w,$h) * 0.4);
-for($i=$gr2; $i>0; $i-=5) {
-    $alpha = (int)(127 - (($gr2 - $i) / $gr2) * 127 * 0.6);
-    $alpha = max(110, $alpha);
-    $gf2 = imagecolorallocatealpha($canvas, $a2r, $a2g, $a2b, $alpha);
-    imagefilledellipse($canvas, $gx2, $gy2, $i*2, (int)($i*1.4), $gf2);
-}
-
-// === LÍNEAS DIAGONALES DECORATIVAS ===
+// ============================================================
+// PASO 5: LÍNEAS DECORATIVAS
+// ============================================================
 if ($show_lines) {
-    for($i=0; $i<8; $i++) {
-        $lx = rand(0, $w);
-        $la = imagecolorallocatealpha($canvas, $ar, $ag, $ab, rand(100,120));
-        imageline($canvas, $lx - $h, -20, $lx + $h, $h+20, $la);
-    }
-    // Líneas horizontales finas
-    for($i=0; $i<4; $i++) {
-        $ly = rand((int)($h*0.1), (int)($h*0.9));
-        $lw2 = rand(100, $w);
-        $lx2 = rand(0, $w - $lw2);
-        $la2 = imagecolorallocatealpha($canvas, $a2r, $a2g, $a2b, rand(105,118));
-        imageline($canvas, $lx2, $ly, $lx2+$lw2, $ly, $la2);
+    // Líneas diagonales — usando imagesetpixel para evitar allocate
+    for($i=0;$i<6;$i++) {
+        $lx = (int)(($w/6)*$i + $w*0.05);
+        // Dibujar línea diagonal con opacidad baja
+        $len = $h*2;
+        for($li=0;$li<$len;$li++) {
+            $lpy = (int)($li - $h*0.5);
+            $lpx = $lx + (int)(($lpy) * 0.3);
+            if($lpx<0||$lpx>=$w||$lpy<0||$lpy>=$h) continue;
+            $existing = imagecolorat($canvas, $lpx, $lpy);
+            $er=($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+            $intensity = 0.05;
+            $nr=min(255,(int)($er*(1-$intensity)+$ar*$intensity));
+            $ng=min(255,(int)($eg*(1-$intensity)+$ag*$intensity));
+            $nb=min(255,(int)($eb*(1-$intensity)+$ab*$intensity));
+            imagesetpixel($canvas, $lpx, $lpy, tc($nr,$ng,$nb,0));
+        }
     }
 }
 
-// === PARTÍCULAS ===
+// ============================================================
+// PASO 6: PARTÍCULAS (puntos)
+// ============================================================
 if ($show_particles) {
-    for($i=0; $i<120; $i++) {
-        $px = rand(0, $w);
-        $py = rand(0, $h);
-        $ps = rand(1, 5);
-        $use_acc2 = ($i % 3 === 0);
-        $pr = $use_acc2 ? $a2r : $ar;
-        $pg = $use_acc2 ? $a2g : $ag;
-        $pb = $use_acc2 ? $a2b : $ab;
-        $pa = imagecolorallocatealpha($canvas, $pr, $pg, $pb, rand(90,118));
-        imagefilledellipse($canvas, $px, $py, $ps, $ps, $pa);
+    mt_srand(42); // semilla fija para no variar en cada request
+    for($i=0;$i<80;$i++) {
+        $px_ = mt_rand(0,$w-1);
+        $py  = mt_rand(0,$h-1);
+        $ps  = mt_rand(1,4);
+        $use2= ($i%3===0);
+        $pr  = $use2?$a2r:$ar; $pg=$use2?$a2g:$ag; $pb=$use2?$a2b:$ab;
+        $opa = mt_rand(8,20)/100.0;
+        for($dy=-$ps;$dy<=$ps;$dy++) {
+            for($dx=-$ps;$dx<=$ps;$dx++) {
+                if($dx*$dx+$dy*$dy>$ps*$ps) continue;
+                $qx=$px_+$dx; $qy=$py+$dy;
+                if($qx<0||$qx>=$w||$qy<0||$qy>=$h) continue;
+                $existing = imagecolorat($canvas, $qx, $qy);
+                $er=($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+                $nr=min(255,(int)($er*(1-$opa)+$pr*$opa));
+                $ng=min(255,(int)($eg*(1-$opa)+$pg*$opa));
+                $nb=min(255,(int)($eb*(1-$opa)+$pb*$opa));
+                imagesetpixel($canvas, $qx, $qy, tc($nr,$ng,$nb,0));
+            }
+        }
     }
+    mt_srand(); // restaurar aleatoriedad
 }
 
-// === NOISE / GRAIN ===
-if ($show_noise) {
-    for($i=0; $i<($w*$h)/80; $i++) {
-        $nx = rand(0, $w-1);
-        $ny = rand(0, $h-1);
-        $nv = rand(0,60);
-        $na = imagecolorallocatealpha($canvas, $nv, $nv, $nv, rand(110,125));
-        imagesetpixel($canvas, $nx, $ny, $na);
-    }
-}
-
-// === BORDE PREMIUM (degradado multi-capa) ===
-$border_max = 20;
-for($i=0; $i<$border_max; $i++) {
-    $progress = $i / $border_max;
-    // Interpola entre acc y acc2
-    $br2 = (int)($ar + ($a2r - $ar) * $progress);
-    $bg2 = (int)($ag + ($a2g - $ag) * $progress);
-    $bb2 = (int)($ab + ($a2b - $ab) * $progress);
-    $alpha_b = (int)(20 + $progress * 100);
-    $bc = imagecolorallocatealpha($canvas, $br2, $bg2, $bb2, min(127, $alpha_b));
-    imagerectangle($canvas, $i, $i, $w-$i-1, $h-$i-1, $bc);
-}
-
-// === SCANLINES ===
+// ============================================================
+// PASO 7: SCANLINES
+// ============================================================
 if ($show_scanlines) {
-    $sl_col = imagecolorallocatealpha($canvas, 0, 0, 0, 115);
-    for($y=0; $y<$h; $y+=3) {
-        imageline($canvas, 0, $y, $w-1, $y, $sl_col);
+    for($py=0;$py<$h;$py+=3) {
+        for($px_=0;$px_<$w;$px_++) {
+            $existing = imagecolorat($canvas, $px_, $py);
+            $er=($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+            $nr=(int)($er*0.85); $ng=(int)($eg*0.85); $nb=(int)($eb*0.85);
+            imagesetpixel($canvas, $px_, $py, tc($nr,$ng,$nb,0));
+        }
     }
 }
 
-// === CARGAR E INSERTAR AVATAR ===
-$ch = curl_init($url_logo);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => 1,
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_USERAGENT      => 'Mozilla/5.0 (compatible; BannerBot/5.0)',
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_TIMEOUT        => 10,
-]);
-$raw = curl_exec($ch);
-curl_close($ch);
+// ============================================================
+// PASO 8: NOISE / GRAIN (solo muestra de píxeles)
+// ============================================================
+if ($show_noise) {
+    mt_srand(123);
+    $noise_count = (int)(($w*$h)/200); // mucho menos, más rápido
+    for($i=0;$i<$noise_count;$i++) {
+        $nx=mt_rand(0,$w-1); $ny=mt_rand(0,$h-1);
+        $nv=mt_rand(0,50);
+        $opa=mt_rand(3,10)/100.0;
+        $existing = imagecolorat($canvas,$nx,$ny);
+        $er=($existing>>16)&0xFF; $eg=($existing>>8)&0xFF; $eb=$existing&0xFF;
+        $nr=min(255,(int)($er*(1-$opa)+$nv*$opa));
+        $ng=min(255,(int)($eg*(1-$opa)+$nv*$opa));
+        $nb=min(255,(int)($eb*(1-$opa)+$nv*$opa));
+        imagesetpixel($canvas,$nx,$ny,tc($nr,$ng,$nb,0));
+    }
+    mt_srand();
+}
 
+// ============================================================
+// PASO 9: BORDE PREMIUM (degradado acc→acc2)
+// ============================================================
+$border_max = 16;
+for($i=0;$i<$border_max;$i++) {
+    $p = $i/$border_max;
+    $br2=(int)($ar+($a2r-$ar)*$p); $bg2=(int)($ag+($a2g-$ag)*$p); $bb2=(int)($ab+($a2b-$ab)*$p);
+    $opa = 0.15 + (1-$p)*0.5;
+    // Top
+    for($px_=$i;$px_<$w-$i;$px_++) {
+        $e=imagecolorat($canvas,$px_,$i); $er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+        imagesetpixel($canvas,$px_,$i,tc(min(255,(int)($er*(1-$opa)+$br2*$opa)),min(255,(int)($eg*(1-$opa)+$bg2*$opa)),min(255,(int)($eb*(1-$opa)+$bb2*$opa)),0));
+    }
+    // Bottom
+    for($px_=$i;$px_<$w-$i;$px_++) {
+        $ry=$h-$i-1; $e=imagecolorat($canvas,$px_,$ry); $er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+        imagesetpixel($canvas,$px_,$ry,tc(min(255,(int)($er*(1-$opa)+$br2*$opa)),min(255,(int)($eg*(1-$opa)+$bg2*$opa)),min(255,(int)($eb*(1-$opa)+$bb2*$opa)),0));
+    }
+    // Left
+    for($py=0;$py<$h;$py++) {
+        $e=imagecolorat($canvas,$i,$py); $er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+        imagesetpixel($canvas,$i,$py,tc(min(255,(int)($er*(1-$opa)+$br2*$opa)),min(255,(int)($eg*(1-$opa)+$bg2*$opa)),min(255,(int)($eb*(1-$opa)+$bb2*$opa)),0));
+    }
+    // Right
+    for($py=0;$py<$h;$py++) {
+        $rx=$w-$i-1; $e=imagecolorat($canvas,$rx,$py); $er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+        imagesetpixel($canvas,$rx,$py,tc(min(255,(int)($er*(1-$opa)+$br2*$opa)),min(255,(int)($eg*(1-$opa)+$bg2*$opa)),min(255,(int)($eb*(1-$opa)+$bb2*$opa)),0));
+    }
+}
+
+// ============================================================
+// PASO 10: AVATAR
+// ============================================================
 $avatar_size = $radius * 2;
-$av_cx = (int)($w * $avatar_x / 100);
-$av_cy = (int)($h * $avatar_y / 100);
-$av_left = $av_cx - $radius;
-$av_top  = $av_cy - $radius;
+$av_cx  = (int)($w * $avatar_x/100);
+$av_cy  = (int)($h * $avatar_y/100);
+$av_left= $av_cx - $radius;
+$av_top = $av_cy - $radius;
+
+$ch = curl_init($url_logo);
+curl_setopt_array($ch,[
+    CURLOPT_RETURNTRANSFER=>1, CURLOPT_SSL_VERIFYPEER=>false,
+    CURLOPT_USERAGENT=>'Mozilla/5.0', CURLOPT_FOLLOWLOCATION=>true, CURLOPT_TIMEOUT=>10,
+]);
+$raw = curl_exec($ch); curl_close($ch);
 
 if ($raw) {
     $logo_img = @imagecreatefromstring($raw);
     if ($logo_img) {
-        $lw = imagesx($logo_img);
-        $lh = imagesy($logo_img);
+        $lw=imagesx($logo_img); $lh=imagesy($logo_img);
 
-        // Sombra del avatar (multi-capa)
-        for($si=40; $si>0; $si-=4) {
-            $sa = (int)(127 - ($si/40)*50);
-            $sh_c = imagecolorallocatealpha($canvas, 0, 0, 0, $sa);
-            imagefilledellipse($canvas, $av_cx+6, $av_cy+8, $avatar_size+$si, $avatar_size+$si, $sh_c);
-        }
-
-        // Anillo exterior (glow acc2)
-        for($ri=0; $ri<16; $ri++) {
-            $ra = (int)(40 + $ri*5);
-            $ring_c = imagecolorallocatealpha($canvas, $a2r, $a2g, $a2b, min(127,127-$ri*6));
-            imageellipse($canvas, $av_cx, $av_cy, $avatar_size+$ri*2, $avatar_size+$ri*2, $ring_c);
-        }
-
-        // Anillo interior acc
-        for($ri=0; $ri<8; $ri++) {
-            $ring_c2 = imagecolorallocatealpha($canvas, $ar, $ag, $ab, max(0,127-$ri*12));
-            imageellipse($canvas, $av_cx, $av_cy, $avatar_size-$ri*2, $avatar_size-$ri*2, $ring_c2);
-        }
-
-        // Crear máscara circular y recortar avatar
-        $tmp = imagecreatetruecolor($avatar_size, $avatar_size);
-        imagealphablending($tmp, false);
-        imagesavealpha($tmp, true);
-        $trans = imagecolorallocatealpha($tmp, 0, 0, 0, 127);
-        imagefilledrectangle($tmp, 0, 0, $avatar_size, $avatar_size, $trans);
-        imagealphablending($tmp, true);
-        imagecopyresampled($tmp, $logo_img, 0, 0, 0, 0, $avatar_size, $avatar_size, $lw, $lh);
-
-        // Aplicar máscara circular
-        $masked = imagecreatetruecolor($avatar_size, $avatar_size);
-        imagealphablending($masked, false);
-        imagesavealpha($masked, true);
-        $clear = imagecolorallocatealpha($masked, 0, 0, 0, 127);
-        imagefilledrectangle($masked, 0, 0, $avatar_size, $avatar_size, $clear);
-        imagealphablending($masked, true);
-
-        for($px2=0; $px2<$avatar_size; $px2++) {
-            for($py2=0; $py2<$avatar_size; $py2++) {
-                $dx = $px2 - $radius;
-                $dy = $py2 - $radius;
-                if(($dx*$dx + $dy*$dy) <= ($radius*$radius)) {
-                    $col_pix = imagecolorat($tmp, $px2, $py2);
-                    imagesetpixel($masked, $px2, $py2, $col_pix);
+        // Sombra suave
+        for($si=30;$si>0;$si-=5) {
+            $opa_s = (1-$si/30.0)*0.3;
+            for($py=max(0,$av_cy-$radius-$si);$py<min($h,$av_cy+$radius+$si);$py++) {
+                for($px_=max(0,$av_cx-$radius-$si);$px_<min($w,$av_cx+$radius+$si);$px_++) {
+                    $dist=sqrt(($px_-($av_cx+4))**2+($py-($av_cy+6))**2);
+                    if($dist>$radius+$si) continue;
+                    $e=imagecolorat($canvas,$px_,$py);$er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+                    $nr=(int)($er*(1-$opa_s)); $ng=(int)($eg*(1-$opa_s)); $nb=(int)($eb*(1-$opa_s));
+                    imagesetpixel($canvas,$px_,$py,tc($nr,$ng,$nb,0));
                 }
             }
         }
 
-        imagecopy($canvas, $masked, $av_left, $av_top, 0, 0, $avatar_size, $avatar_size);
+        // Anillo glow acc2
+        for($ri=12;$ri>0;$ri-=2) {
+            $opa_r = ($ri/12.0)*0.5;
+            $ring_rad=$radius+$ri;
+            for($angle=0;$angle<360;$angle+=1) {
+                $rad=deg2rad($angle);
+                $rx_=(int)($av_cx+$ring_rad*cos($rad));
+                $ry_=(int)($av_cy+$ring_rad*sin($rad));
+                if($rx_<0||$rx_>=$w||$ry_<0||$ry_>=$h) continue;
+                $e=imagecolorat($canvas,$rx_,$ry_);$er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+                $nr=min(255,(int)($er*(1-$opa_r)+$a2r*$opa_r));
+                $ng=min(255,(int)($eg*(1-$opa_r)+$a2g*$opa_r));
+                $nb=min(255,(int)($eb*(1-$opa_r)+$a2b*$opa_r));
+                imagesetpixel($canvas,$rx_,$ry_,tc($nr,$ng,$nb,0));
+            }
+        }
+
+        // Resize avatar a canvas temporal
+        $tmp=imagecreatetruecolor($avatar_size,$avatar_size);
+        imagealphablending($tmp,false);
+        $clear=tc(0,0,0,127);
+        imagefilledrectangle($tmp,0,0,$avatar_size,$avatar_size,$clear);
+        imagealphablending($tmp,true);
+        imagecopyresampled($tmp,$logo_img,0,0,0,0,$avatar_size,$avatar_size,$lw,$lh);
+
+        // Recorte circular (o cuadrado) pixel por pixel
+        for($py=0;$py<$avatar_size;$py++) {
+            for($px_=0;$px_<$avatar_size;$px_++) {
+                $dx=$px_-$radius; $dy=$py-$radius;
+                $inside = ($shape==='square') ? true : ($dx*$dx+$dy*$dy<=$radius*$radius);
+                if(!$inside) continue;
+                $src_px=imagecolorat($tmp,$px_,$py);
+                $cx_=$av_left+$px_; $cy_=$av_top+$py;
+                if($cx_<0||$cx_>=$w||$cy_<0||$cy_>=$h) continue;
+                imagesetpixel($canvas,$cx_,$cy_,$src_px);
+            }
+        }
+        // Anillo interno acc
+        for($angle=0;$angle<360;$angle+=1) {
+            $rad=deg2rad($angle);
+            $rx_=(int)($av_cx+($radius-1)*cos($rad));
+            $ry_=(int)($av_cy+($radius-1)*sin($rad));
+            if($rx_<0||$rx_>=$w||$ry_<0||$ry_>=$h) continue;
+            imagesetpixel($canvas,$rx_,$ry_,tc($ar,$ag,$ab,0));
+        }
         imagedestroy($tmp);
-        imagedestroy($masked);
         imagedestroy($logo_img);
     }
 }
 
-// === EFECTO GLITCH (shift horizontal del avatar zone) ===
+// ============================================================
+// PASO 11: GLITCH
+// ============================================================
 if ($show_glitch) {
-    for($gi=0; $gi<5; $gi++) {
-        $gy_glitch = rand($av_top, $av_top + $avatar_size);
-        $gh = rand(2, 12);
-        $shift = rand(-15,15);
-        // Copia una franja y la reposiciona con shift
-        $strip = imagecreatetruecolor($w, $gh);
-        imagecopy($strip, $canvas, 0, 0, 0, $gy_glitch, $w, $gh);
-        $gc_col = imagecolorallocatealpha($canvas, $ar, 0, $ab, 90);
-        imagefilledrectangle($canvas, 0, $gy_glitch, $w-1, $gy_glitch+$gh, $gc_col);
-        imagecopy($canvas, $strip, $shift, $gy_glitch, 0, 0, $w, $gh);
+    mt_srand(99);
+    for($gi=0;$gi<4;$gi++) {
+        $gy_g=mt_rand($av_top,$av_top+$avatar_size);
+        $gh=mt_rand(2,10);
+        $shift=mt_rand(-12,12);
+        if($gy_g<0||$gy_g+$gh>$h) continue;
+        $strip=imagecreatetruecolor($w,$gh);
+        imagecopy($strip,$canvas,0,0,0,$gy_g,$w,$gh);
+        // colorear franja con tinte acc
+        for($py=0;$py<$gh;$py++) {
+            for($px_=0;$px_<$w;$px_++) {
+                $e=imagecolorat($canvas,$px_,$gy_g+$py);$er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+                imagesetpixel($canvas,$px_,$gy_g+$py,tc(min(255,$er+20),max(0,$eg-20),min(255,$eb+30),0));
+            }
+        }
+        imagecopy($canvas,$strip,$shift,$gy_g,0,0,$w,$gh);
         imagedestroy($strip);
     }
+    mt_srand();
 }
 
-// === TEXTOS con soporte de tamaño escalado ===
-// GD tiene solo 5 fuentes built-in (1=8px, 2=13px, 3=13px, 4=15px, 5=15px)
-// Para textos grandes usamos imagecopyresampled para escalar un canvas temporal
-
-function ds_text_scaled($canvas, $gd_size, $x, $y, $text, $color, $scale=1, $shadow_col=null) {
-    if ($scale <= 1) {
-        if ($shadow_col) imagestring($canvas, $gd_size, $x+2, $y+2, $text, $shadow_col);
-        imagestring($canvas, $gd_size, $x, $y, $text, $color);
-        return;
+// ============================================================
+// PASO 12: TEXTOS (escalado por imagecoypressampled)
+// ============================================================
+function render_text_scaled($canvas, $text, $x, $y, $color_tc, $scale, $shadow=true) {
+    if(empty($text)) return 0;
+    $gd=5; // fuente GD más grande
+    $cw=imagefontwidth($gd); $ch=imagefontheight($gd);
+    $tw=strlen($text)*$cw; $th=$ch;
+    $pad=6;
+    // Dibuja en mini-canvas
+    $tmp=imagecreatetruecolor($tw+$pad*2,$th+$pad*2);
+    imagefill($tmp,0,0,tc(0,0,0,127));
+    $col_r=($color_tc>>16)&0xFF; $col_g=($color_tc>>8)&0xFF; $col_b=$color_tc&0xFF;
+    $tmp_col=imagecolorallocate($tmp,$col_r,$col_g,$col_b);
+    imagestring($tmp,$gd,$pad,$pad,$text,$tmp_col);
+    // Escala sobre canvas principal
+    $dw=(int)(($tw+$pad*2)*$scale); $dh=(int)(($th+$pad*2)*$scale);
+    if($shadow) {
+        // Sombra oscura
+        $stmp=imagecreatetruecolor($tw+$pad*2,$th+$pad*2);
+        imagefill($stmp,0,0,tc(0,0,0,127));
+        $sc=imagecolorallocate($stmp,0,0,0);
+        imagestring($stmp,$gd,$pad,$pad,$text,$sc);
+        imagecopyresampled($canvas,$stmp,$x+3,$y+3,0,0,$dw,$dh,$tw+$pad*2,$th+$pad*2);
+        imagedestroy($stmp);
     }
-    // Calcula tamaño base de la fuente GD
-    $char_w = imagefontwidth($gd_size);
-    $char_h = imagefontheight($gd_size);
-    $base_w = strlen($text) * $char_w;
-    $base_h = $char_h;
-    $pad = 4;
-    // Dibuja en canvas pequeño
-    $tmp = imagecreatetruecolor($base_w + $pad*2, $base_h + $pad*2);
-    $trans = imagecolorallocate($tmp, 1, 1, 1);
-    imagecolortransparent($tmp, $trans);
-    imagefill($tmp, 0, 0, $trans);
-    $white_tmp = imagecolorallocate($tmp, 255, 255, 255);
-    imagestring($tmp, $gd_size, $pad, $pad, $text, $white_tmp);
-    // Escala al canvas principal
-    $dst_w = (int)(($base_w + $pad*2) * $scale);
-    $dst_h = (int)(($base_h + $pad*2) * $scale);
-    // Sombra
-    if ($shadow_col) {
-        imagecopyresampled($canvas, $tmp, $x+3, $y+3, 0, 0, $dst_w, $dst_h, $base_w+$pad*2, $base_h+$pad*2);
-    }
-    imagecopyresampled($canvas, $tmp, $x, $y, 0, 0, $dst_w, $dst_h, $base_w+$pad*2, $base_h+$pad*2);
+    imagecopyresampled($canvas,$tmp,$x,$y,0,0,$dw,$dh,$tw+$pad*2,$th+$pad*2);
     imagedestroy($tmp);
+    return $dh;
 }
 
-// Mapa de tamaño px → escala GD
-function px_to_gd_scale($px) {
-    // Fuente GD 5 tiene ~15px de alto base; escalar desde ahí
-    $base_size = 5;
-    $base_px   = 15;
-    $scale = max(1, round($px / $base_px));
-    return [$base_size, $scale];
+// Escala a partir de px
+function px_scale($px) { return max(1.0, $px/15.0); }
+
+$w_col   = tc(255,255,255,0);
+$acc_col = tc($ar,$ag,$ab,0);
+$acc2_col= tc($a2r,$a2g,$a2b,0);
+$dim_col = tc(130,130,140,0);
+
+$sc1=px_scale($fs1); $sc2=px_scale($fs2); $sc3=px_scale($fs3);
+$h1=(int)(imagefontheight(5)*$sc1+8); $h2=(int)(imagefontheight(5)*$sc2+4); $h3=(int)(imagefontheight(5)*$sc3+4);
+
+// Zona texto
+$text_x = $av_cx + $radius + 40;
+if($text_x > $w*0.72) $text_x = 60;
+$text_zone_w = $w - $text_x - 40;
+
+$total_h = $h3+8+$h1+12+$h2+30;
+$ty = max(20,(int)(($h-$total_h)/2));
+
+// Línea decorativa
+for($li=0;$li<3;$li++) {
+    imagesetpixel($canvas,$text_x+$li,$ty-14,tc($ar,$ag,$ab,0));
+    imagesetpixel($canvas,$text_x+10+$li,$ty-14,tc($a2r,$a2g,$a2b,0));
 }
+for($li_=0;$li_<50;$li_++) imagesetpixel($canvas,$text_x+$li_,$ty-14,tc($ar,$ag,$ab,0));
 
-$white   = imagecolorallocate($canvas, 255, 255, 255);
-$acc_c   = imagecolorallocate($canvas, $ar, $ag, $ab);
-$acc2_c  = imagecolorallocate($canvas, $a2r, $a2g, $a2b);
-$shadow  = imagecolorallocatealpha($canvas, 0, 0, 0, 70);
-$dim     = imagecolorallocate($canvas, 130, 130, 140);
+// Sub
+$t_up=strtoupper($sub);
+render_text_scaled($canvas,$t_up,$text_x,$ty,$acc2_col,$sc3,true);
+$ty+=$h3+8;
 
-// Tamaños de texto desde parámetros (px)
-// fs1,fs2,fs3 ya están definidos arriba como $fs1,$fs2,$fs3
-[$gd1, $sc1] = px_to_gd_scale($fs1);
-[$gd2, $sc2] = px_to_gd_scale($fs2);
-[$gd3, $sc3] = px_to_gd_scale($fs3);
-
-// Altura real de cada bloque
-$h1 = (int)(imagefontheight($gd1) * $sc1);
-$h2 = (int)(imagefontheight($gd2) * $sc2);
-$h3 = (int)(imagefontheight($gd3) * $sc3);
-
-// Zona de texto: a la derecha del avatar
-$text_x_start = $av_cx + $radius + 40;
-$text_zone_w  = $w - $text_x_start - 40;
-if ($text_x_start > $w * 0.7) $text_x_start = 60;
-
-// Calcular posición Y central según alturas reales
-$text_block_h = $h3 + 10 + $h1 + 14 + $h2 + 30 + 30;
-$text_y_base  = (int)(($h / 2) - ($text_block_h / 2));
-if ($text_y_base < 20) $text_y_base = 20;
-
-// Línea acento decorativa
-imageline($canvas, $text_x_start, $text_y_base - 14, $text_x_start + 50, $text_y_base - 14, $acc_c);
-
-// SUB-TEXTO
-if (!empty($sub)) {
-    $sub_up = strtoupper($sub);
-    ds_text_scaled($canvas, $gd3, $text_x_start, $text_y_base, $sub_up, $acc2_c, $sc3, $shadow);
+// T1 principal
+$t1_up=strtoupper($texto1);
+render_text_scaled($canvas,$t1_up,$text_x,$ty,$w_col,$sc1,true);
+// Línea bajo T1
+$t1_pix_w=min((int)(strlen($t1_up)*(imagefontwidth(5)*$sc1)),$text_zone_w);
+for($li=0;$li<$t1_pix_w;$li++) {
+    $lpy=$ty+$h1-4;
+    if($lpy<$h) imagesetpixel($canvas,$text_x+$li,$lpy,tc($ar,$ag,$ab,0));
 }
-$text_y_base += $h3 + 10;
+$ty+=$h1+12;
 
-// T1 — TEXTO PRINCIPAL (escalado)
-if (!empty($texto1)) {
-    $t1_up = strtoupper($texto1);
-    // Render múltiple para simular bold
-    for($thick = 0; $thick < min(3, $sc1); $thick++) {
-        ds_text_scaled($canvas, $gd1, $text_x_start + $thick, $text_y_base + $thick, $t1_up, $white, $sc1, $shadow);
-    }
-    // Línea bajo T1
-    $hl_len = min(strlen($t1_up) * imagefontwidth($gd1) * $sc1, $text_zone_w);
-    $hl_c   = imagecolorallocatealpha($canvas, $ar, $ag, $ab, 90);
-    imageline($canvas, $text_x_start, $text_y_base + $h1 + 4, $text_x_start + (int)$hl_len, $text_y_base + $h1 + 4, $hl_c);
-}
-$text_y_base += $h1 + 16;
-
-// T2 — TEXTO SECUNDARIO
-if (!empty($texto2)) {
-    $t2_up = strtoupper($texto2);
-    ds_text_scaled($canvas, $gd2, $text_x_start, $text_y_base, $t2_up, $acc_c, $sc2, $shadow);
-}
-$text_y_base += $h2 + 16;
+// T2
+$t2_up=strtoupper($texto2);
+render_text_scaled($canvas,$t2_up,$text_x,$ty,$acc_col,$sc2,true);
+$ty+=$h2+16;
 
 // Separador
-$sep_c = imagecolorallocatealpha($canvas, $ar, $ag, $ab, 70);
-imageline($canvas, $text_x_start, $text_y_base, $text_x_start + 80, $text_y_base, $sep_c);
-$text_y_base += 20;
+for($li=0;$li<80;$li++) {
+    if($text_x+$li<$w&&$ty<$h) imagesetpixel($canvas,$text_x+$li,$ty,tc($ar,$ag,$ab,0));
+}
+$ty+=12;
 
-// Preset name pequeño
-$pname = $cfg['name'] ?? '';
-imagestring($canvas, 1, $text_x_start, $text_y_base, "STYLE: $pname · #{$estilo}", $dim);
+// Nombre preset pequeño
+$pname=$cfg['name']??'';
+$pname_text="STYLE: $pname #$estilo";
+render_text_scaled($canvas,$pname_text,$text_x,$ty,$dim_col,1.0,false);
 
-// === BADGE ===
-if (!empty($badge_text)) {
-    $badge_up = strtoupper($badge_text);
-    $badge_pad = 12;
-    $badge_w2 = strlen($badge_up) * 8 + $badge_pad * 2;
-    $badge_h2 = 24;
-    $badge_bx = $w - $badge_w2 - 30;
-    $badge_by = 28;
-    $badge_bg = imagecolorallocatealpha($canvas, $ar, $ag, $ab, 40);
-    imagefilledrectangle($canvas, $badge_bx, $badge_by, $badge_bx+$badge_w2, $badge_by+$badge_h2, $badge_bg);
-    imagerectangle($canvas, $badge_bx, $badge_by, $badge_bx+$badge_w2, $badge_by+$badge_h2, $acc_c);
-    ds_text($canvas, 2, $badge_bx + $badge_pad, $badge_by + 5, $badge_up, $white);
+// ============================================================
+// PASO 13: BADGE
+// ============================================================
+if(!empty($badge_text)) {
+    $badge_up=strtoupper($badge_text);
+    $bw_=(int)(strlen($badge_up)*imagefontwidth(2)+28);
+    $bh_=24; $bx=$w-$bw_-24; $by=24;
+    // Fondo badge (blend manual)
+    for($py=$by;$py<$by+$bh_;$py++) {
+        for($px_=$bx;$px_<$bx+$bw_;$px_++) {
+            if($px_<0||$px_>=$w||$py<0||$py>=$h) continue;
+            $e=imagecolorat($canvas,$px_,$py);$er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+            $nr=min(255,(int)($er*0.7+$ar*0.3));$ng=min(255,(int)($eg*0.7+$ag*0.3));$nb=min(255,(int)($eb*0.7+$ab*0.3));
+            imagesetpixel($canvas,$px_,$py,tc($nr,$ng,$nb,0));
+        }
+    }
+    // Borde badge
+    for($li=$bx;$li<$bx+$bw_;$li++) {
+        if($li<$w){ imagesetpixel($canvas,$li,$by,tc($ar,$ag,$ab,0)); imagesetpixel($canvas,$li,$by+$bh_-1,tc($ar,$ag,$ab,0)); }
+    }
+    for($li=$by;$li<$by+$bh_;$li++) {
+        if($li<$h){ imagesetpixel($canvas,$bx,$li,tc($ar,$ag,$ab,0)); imagesetpixel($canvas,$bx+$bw_-1,$li,tc($ar,$ag,$ab,0)); }
+    }
+    render_text_scaled($canvas,$badge_up,$bx+10,$by+4,tc(255,255,255,0),1.0,false);
 }
 
-// === WATERMARK ===
-if (!empty($watermark)) {
-    $wm_col = imagecolorallocatealpha($canvas, 255, 255, 255, 100);
-    ds_text($canvas, 1, $w - strlen($watermark)*6 - 16, $h - 18, $watermark, $wm_col);
+// ============================================================
+// PASO 14: WATERMARK
+// ============================================================
+if(!empty($watermark)) {
+    $wm_x=$w-strlen($watermark)*imagefontwidth(1)-12;
+    $wm_y=$h-imagefontheight(1)-8;
+    // render semi-transparente manual
+    $wm_tmp=imagecreatetruecolor(strlen($watermark)*imagefontwidth(1)+4,imagefontheight(1)+4);
+    imagefill($wm_tmp,0,0,tc(0,0,0,127));
+    $wm_c=imagecolorallocate($wm_tmp,255,255,255);
+    imagestring($wm_tmp,1,2,2,$watermark,$wm_c);
+    $wm_w2=imagesx($wm_tmp);$wm_h2=imagesy($wm_tmp);
+    for($py=0;$py<$wm_h2;$py++) {
+        for($px_=0;$px_<$wm_w2;$px_++) {
+            $s=imagecolorat($wm_tmp,$px_,$py);$sr=($s>>16)&0xFF;$sg=($s>>8)&0xFF;$sb=$s&0xFF;
+            $cx_=$wm_x+$px_;$cy_=$wm_y+$py;
+            if($cx_<0||$cx_>=$w||$cy_<0||$cy_>=$h) continue;
+            $e=imagecolorat($canvas,$cx_,$cy_);$er=($e>>16)&0xFF;$eg=($e>>8)&0xFF;$eb=$e&0xFF;
+            $opa=0.25;
+            $nr=(int)($er*(1-$opa)+$sr*$opa);$ng=(int)($eg*(1-$opa)+$sg*$opa);$nb=(int)($eb*(1-$opa)+$sb*$opa);
+            imagesetpixel($canvas,$cx_,$cy_,tc($nr,$ng,$nb,0));
+        }
+    }
+    imagedestroy($wm_tmp);
 }
 
-// === SALIDA ===
-header('Cache-Control: public, max-age=86400');
-header('X-Banner-Style: ' . $estilo);
-header('X-Banner-Preset: ' . ($cfg['name'] ?? 'unknown'));
+// ============================================================
+// SALIDA
+// ============================================================
+header('Cache-Control: no-store'); // no cachear durante desarrollo
+header('X-Banner-Style: '.$estilo);
+header('X-Banner-Preset: '.($cfg['name']??''));
+header('X-Generator: DeylinSystems-BannerLab-V5.1');
 
-if ($output_format === 'jpeg') {
+if($output_format==='jpeg') {
     header('Content-Type: image/jpeg');
-    imagejpeg($canvas, null, $quality);
+    imagejpeg($canvas,null,$quality);
 } else {
     header('Content-Type: image/png');
-    imagepng($canvas);
+    imagepng($canvas,null,6);
 }
 imagedestroy($canvas);
 ?>
