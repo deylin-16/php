@@ -16,9 +16,13 @@ $texto2    = urldecode($_GET['t2']   ?? 'PREMIUM BANNER LAB');
 $sub       = urldecode($_GET['sub']  ?? 'ENGINE V5.0');
 $width     = min(2400, max(400, (int)($_GET['w']  ?? 1200)));
 $height    = min(1200, max(200, (int)($_GET['h']  ?? 600)));
-$radius    = min(300, max(50, (int)($_GET['r']   ?? 200)));  // Radio del avatar
-$avatar_x  = min(90,  max(10, (int)($_GET['ax']  ?? 15)));   // Posición X avatar %
-$avatar_y  = min(90,  max(10, (int)($_GET['ay']  ?? 50)));   // Posición Y avatar %
+$radius    = min(300, max(50, (int)($_GET['r']   ?? 200)));
+$avatar_x  = min(90,  max(10, (int)($_GET['ax']  ?? 15)));
+$avatar_y  = min(90,  max(10, (int)($_GET['ay']  ?? 50)));
+// Tamaños de fuente en px (mismos que el canvas JS)
+$fs1       = min(200, max(8, (int)($_GET['fs1'] ?? 72)));   // fuente t1 (px)
+$fs2       = min(100, max(8, (int)($_GET['fs2'] ?? 32)));   // fuente t2 (px)
+$fs3       = min(60,  max(8, (int)($_GET['fs3'] ?? 18)));   // fuente sub (px)
 $show_particles = ($_GET['particles'] ?? '1') !== '0';
 $show_lines     = ($_GET['lines']     ?? '1') !== '0';
 $show_glitch    = ($_GET['glitch']    ?? '0') === '1';
@@ -27,7 +31,7 @@ $show_noise     = ($_GET['noise']     ?? '1') !== '0';
 $show_grid      = ($_GET['grid']      ?? '0') === '1';
 $badge_text     = urldecode($_GET['badge'] ?? '');
 $watermark      = urldecode($_GET['wm']    ?? 'deylin.systems');
-$output_format  = strtolower($_GET['fmt']  ?? 'png'); // png | jpeg | webp
+$output_format  = strtolower($_GET['fmt']  ?? 'png');
 $quality        = min(100, max(10, (int)($_GET['q'] ?? 90)));
 
 $img_predeterminada = "https://ik.imagekit.io/pm10ywrf6f/bot_by_deylin/1769830823123_e336030d2dfd15b3f2a9bec8d30e15f3_YZEsD9KKM.jpg";
@@ -44,7 +48,7 @@ if (empty($url_logo)) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DEYLIN SYSTEMS · BANNER LAB ULTRA V5</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=DM+Sans:wght@300;400;600&family=Anton&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   :root {
     --c-bg:    #050508;
@@ -276,17 +280,16 @@ if (empty($url_logo)) {
       <div class="glass">
         <div class="section-title">PREVIEW EN VIVO</div>
         <div id="preview-wrap">
-          <img id="preview-img" src="" alt="Preview" loading="lazy">
+          <canvas id="preview-canvas" style="width:100%;border-radius:18px;display:block;"></canvas>
+          <div style="position:absolute;top:12px;left:12px;font-family:var(--font-mono);font-size:.6rem;background:rgba(0,0,0,.6);color:#06d6a0;padding:4px 10px;border-radius:20px;border:1px solid rgba(6,214,160,.3)">⚡ LIVE PREVIEW</div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="copyApiUrl()">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             Copiar URL API
           </button>
-          <button class="btn btn-secondary" onclick="openRaw()">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Ver Raw
-          </button>
+          <button class="btn btn-secondary" onclick="downloadCanvas()">⬇ PNG</button>
+          <button class="btn btn-secondary" onclick="openRaw()">Ver PHP</button>
           <div style="display:flex;gap:6px;margin-left:auto" id="fmt-row">
             <div class="fmt-btn active" onclick="setFmt('png',this)">PNG</div>
             <div class="fmt-btn" onclick="setFmt('jpeg',this)">JPEG</div>
@@ -382,28 +385,55 @@ if (empty($url_logo)) {
     <!-- RIGHT: PANEL DE CONTROL -->
     <div style="display:flex;flex-direction:column;gap:16px">
 
-      <!-- Textos -->
+      <!-- Textos + Fuentes -->
       <div class="glass glass-sm">
-        <div class="section-title">TEXTOS</div>
+        <div class="section-title">TEXTOS Y TIPOGRAFÍA</div>
         <div class="field-group">
-          <label>TEXTO PRINCIPAL (t1)</label>
-          <input type="text" id="i-t1" value="DEYLIN SYSTEMS" oninput="updatePreview()">
+          <label>FUENTE GLOBAL</label>
+          <select id="i-font" onchange="renderCanvas()">
+            <option value="'Bebas Neue', cursive">Bebas Neue</option>
+            <option value="'Orbitron', sans-serif">Orbitron</option>
+            <option value="'Anton', sans-serif">Anton</option>
+            <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+            <option value="'DM Sans', sans-serif">DM Sans</option>
+            <option value="Impact, sans-serif">Impact</option>
+            <option value="Georgia, serif">Georgia</option>
+          </select>
         </div>
         <div class="field-group">
-          <label>TEXTO SECUNDARIO (t2)</label>
-          <input type="text" id="i-t2" value="PREMIUM BANNER LAB" oninput="updatePreview()">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label style="margin:0">TEXTO PRINCIPAL (t1)</label>
+            <span style="font-family:var(--font-mono);font-size:.6rem;color:#7c3aed">TAMAÑO: <span id="lbl-fs1">72</span>px</span>
+          </div>
+          <input type="text" id="i-t1" value="DEYLIN SYSTEMS" oninput="renderCanvas()">
+          <input type="range" id="i-fs1" min="12" max="200" value="72" style="margin-top:8px"
+            oninput="document.getElementById('lbl-fs1').textContent=this.value;renderCanvas()">
         </div>
         <div class="field-group">
-          <label>SUB-TEXTO (sub)</label>
-          <input type="text" id="i-sub" value="ENGINE V5.0" oninput="updatePreview()">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label style="margin:0">TEXTO SECUNDARIO (t2)</label>
+            <span style="font-family:var(--font-mono);font-size:.6rem;color:#06d6a0">TAMAÑO: <span id="lbl-fs2">32</span>px</span>
+          </div>
+          <input type="text" id="i-t2" value="PREMIUM BANNER LAB" oninput="renderCanvas()">
+          <input type="range" id="i-fs2" min="8" max="100" value="32" style="margin-top:8px"
+            oninput="document.getElementById('lbl-fs2').textContent=this.value;renderCanvas()">
+        </div>
+        <div class="field-group">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label style="margin:0">SUB-TEXTO (sub)</label>
+            <span style="font-family:var(--font-mono);font-size:.6rem;color:#f72585">TAMAÑO: <span id="lbl-fs3">18</span>px</span>
+          </div>
+          <input type="text" id="i-sub" value="ENGINE V5.0" oninput="renderCanvas()">
+          <input type="range" id="i-fs3" min="8" max="60" value="18" style="margin-top:8px"
+            oninput="document.getElementById('lbl-fs3').textContent=this.value;renderCanvas()">
         </div>
         <div class="field-group">
           <label>BADGE / ETIQUETA</label>
-          <input type="text" id="i-badge" placeholder="ej: NUEVO · LIVE · VIP" oninput="updatePreview()">
+          <input type="text" id="i-badge" placeholder="ej: NUEVO · LIVE · VIP" oninput="renderCanvas()">
         </div>
         <div class="field-group">
           <label>WATERMARK</label>
-          <input type="text" id="i-wm" value="deylin.systems" oninput="updatePreview()">
+          <input type="text" id="i-wm" value="deylin.systems" oninput="renderCanvas()">
         </div>
       </div>
 
@@ -413,11 +443,11 @@ if (empty($url_logo)) {
         <div class="row-2">
           <div class="field-group">
             <label>ANCHO (w)</label>
-            <input type="number" id="i-w" value="1200" min="400" max="2400" step="50" oninput="updatePreview()">
+            <input type="number" id="i-w" value="1200" min="400" max="2400" step="50" oninput="renderCanvas()">
           </div>
           <div class="field-group">
             <label>ALTO (h)</label>
-            <input type="number" id="i-h" value="600" min="200" max="1200" step="50" oninput="updatePreview()">
+            <input type="number" id="i-h" value="600" min="200" max="1200" step="50" oninput="renderCanvas()">
           </div>
         </div>
         <div class="field-group">
@@ -437,20 +467,20 @@ if (empty($url_logo)) {
         <div class="section-title">AVATAR / LOGO</div>
         <div class="field-group">
           <label>URL DE IMAGEN</label>
-          <input type="url" id="i-logo" placeholder="https://..." oninput="updatePreview()">
+          <input type="url" id="i-logo" placeholder="https://..." oninput="renderCanvas()">
         </div>
         <div class="field-group">
           <label>RADIO (r): <span id="lbl-r">200</span>px</label>
-          <input type="range" id="i-r" min="50" max="300" value="200" oninput="document.getElementById('lbl-r').textContent=this.value;updatePreview()">
+          <input type="range" id="i-r" min="50" max="300" value="200" oninput="document.getElementById('lbl-r').textContent=this.value;renderCanvas()">
         </div>
         <div class="row-2">
           <div class="field-group">
             <label>POS X (ax): <span id="lbl-ax">15</span>%</label>
-            <input type="range" id="i-ax" min="10" max="90" value="15" oninput="document.getElementById('lbl-ax').textContent=this.value;updatePreview()">
+            <input type="range" id="i-ax" min="10" max="90" value="15" oninput="document.getElementById('lbl-ax').textContent=this.value;renderCanvas()">
           </div>
           <div class="field-group">
             <label>POS Y (ay): <span id="lbl-ay">50</span>%</label>
-            <input type="range" id="i-ay" min="10" max="90" value="50" oninput="document.getElementById('lbl-ay').textContent=this.value;updatePreview()">
+            <input type="range" id="i-ay" min="10" max="90" value="50" oninput="document.getElementById('lbl-ay').textContent=this.value;renderCanvas()">
           </div>
         </div>
       </div>
@@ -460,27 +490,27 @@ if (empty($url_logo)) {
         <div class="section-title">EFECTOS VISUALES</div>
         <div class="toggle-row">
           <span class="toggle-label">✦ Partículas</span>
-          <label class="toggle"><input type="checkbox" id="e-particles" checked onchange="updatePreview()"><div class="toggle-slider"></div></label>
+          <label class="toggle"><input type="checkbox" id="e-particles" checked onchange="renderCanvas()"><div class="toggle-slider"></div></label>
         </div>
         <div class="toggle-row">
           <span class="toggle-label">⟋ Líneas decorativas</span>
-          <label class="toggle"><input type="checkbox" id="e-lines" checked onchange="updatePreview()"><div class="toggle-slider"></div></label>
+          <label class="toggle"><input type="checkbox" id="e-lines" checked onchange="renderCanvas()"><div class="toggle-slider"></div></label>
         </div>
         <div class="toggle-row">
           <span class="toggle-label">▒ Noise / Grain</span>
-          <label class="toggle"><input type="checkbox" id="e-noise" checked onchange="updatePreview()"><div class="toggle-slider"></div></label>
+          <label class="toggle"><input type="checkbox" id="e-noise" checked onchange="renderCanvas()"><div class="toggle-slider"></div></label>
         </div>
         <div class="toggle-row">
           <span class="toggle-label">⊞ Grid de fondo</span>
-          <label class="toggle"><input type="checkbox" id="e-grid" onchange="updatePreview()"><div class="toggle-slider"></div></label>
+          <label class="toggle"><input type="checkbox" id="e-grid" onchange="renderCanvas()"><div class="toggle-slider"></div></label>
         </div>
         <div class="toggle-row">
           <span class="toggle-label">▬ Scanlines</span>
-          <label class="toggle"><input type="checkbox" id="e-scanlines" onchange="updatePreview()"><div class="toggle-slider"></div></label>
+          <label class="toggle"><input type="checkbox" id="e-scanlines" onchange="renderCanvas()"><div class="toggle-slider"></div></label>
         </div>
         <div class="toggle-row">
           <span class="toggle-label">⚡ Efecto Glitch</span>
-          <label class="toggle"><input type="checkbox" id="e-glitch" onchange="updatePreview()"><div class="toggle-slider"></div></label>
+          <label class="toggle"><input type="checkbox" id="e-glitch" onchange="renderCanvas()"><div class="toggle-slider"></div></label>
         </div>
       </div>
 
@@ -492,13 +522,14 @@ if (empty($url_logo)) {
           <button class="btn btn-secondary" onclick="openRaw()">Abrir</button>
         </div>
         <div class="btn-row" style="margin-top:8px">
-          <button class="btn btn-secondary" style="flex:1" onclick="downloadImg()">⬇ Descargar</button>
+          <button class="btn btn-secondary" style="flex:1" onclick="downloadCanvas()">⬇ PNG Directo</button>
+          <button class="btn btn-secondary" onclick="downloadImg()">⬇ PHP</button>
           <button class="btn btn-danger" onclick="resetAll()">↺ Reset</button>
         </div>
         <div style="margin-top:10px">
           <div class="field-group">
             <label>CALIDAD JPEG (q)</label>
-            <input type="range" id="i-q" min="10" max="100" value="90" oninput="updatePreview()">
+            <input type="range" id="i-q" min="10" max="100" value="90" oninput="renderCanvas()">
           </div>
         </div>
       </div>
@@ -514,36 +545,40 @@ if (empty($url_logo)) {
 
 <script>
 // ============================================================
-// STYLE PRESETS DATA (para renderizar las tarjetas)
+// PRESETS DATA
 // ============================================================
 const PRESETS = [
-  {id:1,  name:'Violet Luxe',    bg:'#0a0a1a', acc:'#a855f7'},
-  {id:2,  name:'Cyber Neon',     bg:'#141414', acc:'#00ff96'},
-  {id:3,  name:'Synthwave',      bg:'#280028', acc:'#ff1493'},
-  {id:4,  name:'Deep Blue',      bg:'#0f0f23', acc:'#0096ff'},
-  {id:5,  name:'Blood Red',      bg:'#190a0a', acc:'#ff2d2d'},
-  {id:6,  name:'Acid Green',     bg:'#0a1e0a', acc:'#adff2f'},
-  {id:7,  name:'Luxury Gold',    bg:'#000000', acc:'#ffd700'},
-  {id:8,  name:'White Studio',   bg:'#1e1e32', acc:'#ffffff'},
-  {id:9,  name:'Pink Shadow',    bg:'#0a0a0a', acc:'#ec4899'},
-  {id:10, name:'Coral Night',    bg:'#191919', acc:'#ff7f50'},
-  {id:11, name:'Ice Glacier',    bg:'#060c14', acc:'#00cfff'},
-  {id:12, name:'Ember',          bg:'#1a0800', acc:'#ff5e00'},
-  {id:13, name:'Lavender Mist',  bg:'#0d0814', acc:'#c084fc'},
-  {id:14, name:'Teal Matrix',    bg:'#020f0e', acc:'#00e5c8'},
-  {id:15, name:'Rose Gold',      bg:'#1a0f0f', acc:'#f4a1a1'},
-  {id:16, name:'Solar Flare',    bg:'#0f0800', acc:'#fbbf24'},
-  {id:17, name:'Ultraviolet',    bg:'#07010f', acc:'#8b5cf6'},
-  {id:18, name:'Mercury',        bg:'#0d0d0d', acc:'#e0e0e0'},
-  {id:19, name:'Abyssal',        bg:'#000508', acc:'#065f46'},
-  {id:20, name:'Hologram',       bg:'#050010', acc:'#7fdbff'},
+  {id:1,  name:'Violet Luxe',    bg:'#0a0a1a', acc:'#a855f7', acc2:'#ec4899'},
+  {id:2,  name:'Cyber Neon',     bg:'#141414', acc:'#00ff96', acc2:'#00cfff'},
+  {id:3,  name:'Synthwave',      bg:'#280028', acc:'#ff1493', acc2:'#ff8c00'},
+  {id:4,  name:'Deep Blue',      bg:'#080820', acc:'#0096ff', acc2:'#00e5c8'},
+  {id:5,  name:'Blood Red',      bg:'#190a0a', acc:'#ff2d2d', acc2:'#ff9900'},
+  {id:6,  name:'Acid Green',     bg:'#0a1e0a', acc:'#adff2f', acc2:'#00ff64'},
+  {id:7,  name:'Luxury Gold',    bg:'#0a0800', acc:'#ffd700', acc2:'#ffb400'},
+  {id:8,  name:'White Studio',   bg:'#141428', acc:'#ffffff', acc2:'#b4b4ff'},
+  {id:9,  name:'Pink Shadow',    bg:'#0a060a', acc:'#ec4899', acc2:'#b400b4'},
+  {id:10, name:'Coral Night',    bg:'#191919', acc:'#ff7f50', acc2:'#ff501e'},
+  {id:11, name:'Ice Glacier',    bg:'#040a14', acc:'#00cfff', acc2:'#0082ff'},
+  {id:12, name:'Ember',          bg:'#180500', acc:'#ff5a00', acc2:'#ffc800'},
+  {id:13, name:'Lavender Mist',  bg:'#0c0814', acc:'#c084fc', acc2:'#ec4899'},
+  {id:14, name:'Teal Matrix',    bg:'#020e0c', acc:'#00e5c8', acc2:'#00b4a0'},
+  {id:15, name:'Rose Gold',      bg:'#160c0c', acc:'#f4a1a1', acc2:'#ffc8b4'},
+  {id:16, name:'Solar Flare',    bg:'#0e0800', acc:'#fbbf24', acc2:'#ff7800'},
+  {id:17, name:'Ultraviolet',    bg:'#07010f', acc:'#8b5cf6', acc2:'#ec4899'},
+  {id:18, name:'Mercury',        bg:'#0a0a0a', acc:'#dcdcdc', acc2:'#969696'},
+  {id:19, name:'Abyssal',        bg:'#000508', acc:'#10b981', acc2:'#065f46'},
+  {id:20, name:'Hologram',       bg:'#040010', acc:'#7fdbff', acc2:'#c864ff'},
 ];
 
 let currentStyle = 1;
 let currentFmt   = 'png';
+let avatarImg    = null;   // ImageBitmap del avatar cargado
+let avatarUrl    = '';
 
+// ============================================================
 // Render style cards
-const grid = document.getElementById('style-grid');
+// ============================================================
+const styleGrid = document.getElementById('style-grid');
 PRESETS.forEach(p => {
   const d = document.createElement('div');
   d.className = 'style-card';
@@ -553,7 +588,7 @@ PRESETS.forEach(p => {
     <div class="num">#${String(p.id).padStart(2,'0')}</div>
     <div class="name">${p.name}</div>`;
   d.onclick = () => changeStyle(p.id);
-  grid.appendChild(d);
+  styleGrid.appendChild(d);
 });
 document.getElementById('sc-1').classList.add('active');
 
@@ -561,63 +596,398 @@ function changeStyle(id) {
   document.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
   document.getElementById(`sc-${id}`)?.classList.add('active');
   currentStyle = id;
-  updatePreview();
+  renderCanvas();
 }
 
+// ============================================================
+// CANVAS PREVIEW EN TIEMPO REAL
+// ============================================================
+const previewCanvas = document.getElementById('preview-canvas');
+const ctx = previewCanvas.getContext('2d');
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+function renderCanvas() {
+  const W = parseInt(document.getElementById('i-w').value) || 1200;
+  const H = parseInt(document.getElementById('i-h').value) || 600;
+  previewCanvas.width  = W;
+  previewCanvas.height = H;
+
+  const p    = PRESETS[currentStyle-1] || PRESETS[0];
+  const bg   = hexToRgb(p.bg);
+  const acc  = hexToRgb(p.acc);
+  const acc2 = hexToRgb(p.acc2);
+
+  // --- FONDO gradient ---
+  const bgGrad = ctx.createLinearGradient(0,0,0,H);
+  bgGrad.addColorStop(0, p.bg);
+  bgGrad.addColorStop(1, `rgb(${Math.min(255,bg.r+20)},${Math.min(255,bg.g+20)},${Math.min(255,bg.b+20)})`);
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,W,H);
+
+  // --- GRID ---
+  const showGrid = document.getElementById('e-grid').checked;
+  if (showGrid) {
+    ctx.strokeStyle = `rgba(${acc.r},${acc.g},${acc.b},0.06)`;
+    ctx.lineWidth = 1;
+    const step = Math.round(W/24);
+    for(let x=0; x<W; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for(let y=0; y<H; y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  }
+
+  // --- GLOW 1 (acc) ---
+  const gx1 = W*0.65, gy1 = H*0.5;
+  const gr1 = ctx.createRadialGradient(gx1,gy1,0,gx1,gy1,Math.max(W,H)*0.55);
+  gr1.addColorStop(0, `rgba(${acc.r},${acc.g},${acc.b},0.18)`);
+  gr1.addColorStop(1, 'transparent');
+  ctx.fillStyle = gr1;
+  ctx.fillRect(0,0,W,H);
+
+  // --- GLOW 2 (acc2) ---
+  const gx2 = W*0.28, gy2 = H*0.18;
+  const gr2 = ctx.createRadialGradient(gx2,gy2,0,gx2,gy2,Math.max(W,H)*0.38);
+  gr2.addColorStop(0, `rgba(${acc2.r},${acc2.g},${acc2.b},0.16)`);
+  gr2.addColorStop(1, 'transparent');
+  ctx.fillStyle = gr2;
+  ctx.fillRect(0,0,W,H);
+
+  // --- LÍNEAS DECORATIVAS ---
+  const showLines = document.getElementById('e-lines').checked;
+  if (showLines) {
+    ctx.save();
+    for(let i=0;i<6;i++) {
+      const lx = (W/6)*i + W*0.05;
+      ctx.strokeStyle = `rgba(${acc.r},${acc.g},${acc.b},0.06)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(lx - H, -20);
+      ctx.lineTo(lx + H, H+20);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // --- PARTÍCULAS ---
+  const showParticles = document.getElementById('e-particles').checked;
+  if (showParticles) {
+    for(let i=0;i<100;i++) {
+      const px = Math.random()*W;
+      const py = Math.random()*H;
+      const ps = Math.random()*4+1;
+      const useAcc2 = i%3===0;
+      const col = useAcc2 ? acc2 : acc;
+      ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},${Math.random()*0.3+0.05})`;
+      ctx.beginPath();
+      ctx.arc(px,py,ps/2,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  // --- SCANLINES ---
+  const showScanlines = document.getElementById('e-scanlines').checked;
+  if (showScanlines) {
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    for(let y=0; y<H; y+=3) {
+      ctx.fillRect(0, y, W, 1);
+    }
+  }
+
+  // --- NOISE ---
+  const showNoise = document.getElementById('e-noise').checked;
+  if (showNoise) {
+    const noiseData = ctx.createImageData(W,H);
+    for(let i=0; i<noiseData.data.length; i+=4) {
+      const v = Math.random()*30;
+      noiseData.data[i]   = v;
+      noiseData.data[i+1] = v;
+      noiseData.data[i+2] = v;
+      noiseData.data[i+3] = Math.random()*18;
+    }
+    ctx.putImageData(noiseData, 0, 0);
+  }
+
+  // --- AVATAR ---
+  const r    = parseInt(document.getElementById('i-r').value) || 200;
+  const axPc = parseInt(document.getElementById('i-ax').value) || 15;
+  const ayPc = parseInt(document.getElementById('i-ay').value) || 50;
+  const avCx = W * axPc/100;
+  const avCy = H * ayPc/100;
+  const diam = r*2;
+
+  if (avatarImg) {
+    // Sombra
+    ctx.save();
+    ctx.shadowColor = `rgba(${acc.r},${acc.g},${acc.b},0.5)`;
+    ctx.shadowBlur  = 40;
+    ctx.beginPath();
+    ctx.arc(avCx, avCy, r+2, 0, Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(avatarImg, avCx-r, avCy-r, diam, diam);
+    ctx.restore();
+
+    // Anillo glow externo acc2
+    for(let ri=14; ri>0; ri-=2) {
+      ctx.strokeStyle = `rgba(${acc2.r},${acc2.g},${acc2.b},${ri*0.025})`;
+      ctx.lineWidth = ri;
+      ctx.beginPath();
+      ctx.arc(avCx, avCy, r+ri, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    // Anillo interno acc
+    for(let ri=6; ri>0; ri-=2) {
+      ctx.strokeStyle = `rgba(${acc.r},${acc.g},${acc.b},${ri*0.06})`;
+      ctx.lineWidth = ri;
+      ctx.beginPath();
+      ctx.arc(avCx, avCy, r-ri/2, 0, Math.PI*2);
+      ctx.stroke();
+    }
+  } else {
+    // Placeholder avatar
+    const plGrad = ctx.createRadialGradient(avCx,avCy,0,avCx,avCy,r);
+    plGrad.addColorStop(0, `rgba(${acc.r},${acc.g},${acc.b},0.2)`);
+    plGrad.addColorStop(1, `rgba(${acc.r},${acc.g},${acc.b},0.04)`);
+    ctx.fillStyle = plGrad;
+    ctx.beginPath();
+    ctx.arc(avCx, avCy, r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(${acc.r},${acc.g},${acc.b},0.4)`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Icono
+    ctx.fillStyle = `rgba(${acc.r},${acc.g},${acc.b},0.5)`;
+    ctx.font = `${r*0.5}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('◎', avCx, avCy);
+  }
+
+  // --- TEXTOS ---
+  const font    = document.getElementById('i-font').value;
+  const t1      = document.getElementById('i-t1').value.toUpperCase();
+  const t2      = document.getElementById('i-t2').value.toUpperCase();
+  const sub     = document.getElementById('i-sub').value.toUpperCase();
+  const badge   = document.getElementById('i-badge').value.toUpperCase();
+  const wm      = document.getElementById('i-wm').value;
+  const fs1     = parseInt(document.getElementById('i-fs1').value) || 72;
+  const fs2     = parseInt(document.getElementById('i-fs2').value) || 32;
+  const fs3     = parseInt(document.getElementById('i-fs3').value) || 18;
+
+  // Zona de texto (a la derecha del avatar, o izquierda si avatar está a la derecha)
+  let textX = avCx + r + 40;
+  if (textX > W*0.7) textX = 60;
+  const textZoneW = W - textX - 40;
+
+  let ty = H/2 - (fs1 + fs2 + fs3 + 40) / 2;
+
+  // Línea acento decorativa
+  ctx.strokeStyle = `rgba(${acc.r},${acc.g},${acc.b},0.9)`;
+  ctx.lineWidth   = 3;
+  ctx.beginPath();
+  ctx.moveTo(textX, ty - 14);
+  ctx.lineTo(textX + 50, ty - 14);
+  ctx.stroke();
+
+  // SUB
+  if (sub) {
+    ctx.font      = `${fs3}px ${font}`;
+    ctx.fillStyle = `rgba(${acc2.r},${acc2.g},${acc2.b},0.95)`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(sub, textX, ty);
+  }
+  ty += fs3 + 10;
+
+  // T1 — principal con glow
+  if (t1) {
+    ctx.font      = `bold ${fs1}px ${font}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    // Sombra
+    ctx.shadowColor  = `rgba(${acc.r},${acc.g},${acc.b},0.6)`;
+    ctx.shadowBlur   = 20;
+    ctx.fillStyle    = '#ffffff';
+    ctx.fillText(t1, textX, ty);
+    ctx.shadowBlur   = 0;
+    // Línea bajo T1
+    const t1W = Math.min(ctx.measureText(t1).width, textZoneW);
+    const lineGrad = ctx.createLinearGradient(textX, 0, textX+t1W, 0);
+    lineGrad.addColorStop(0, `rgba(${acc.r},${acc.g},${acc.b},0.8)`);
+    lineGrad.addColorStop(1, 'transparent');
+    ctx.strokeStyle = lineGrad;
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(textX, ty + fs1 + 4);
+    ctx.lineTo(textX + t1W, ty + fs1 + 4);
+    ctx.stroke();
+  }
+  ty += fs1 + 16;
+
+  // T2
+  if (t2) {
+    ctx.font      = `${fs2}px ${font}`;
+    ctx.fillStyle = `rgba(${acc.r},${acc.g},${acc.b},0.9)`;
+    ctx.textBaseline = 'top';
+    ctx.fillText(t2, textX, ty);
+  }
+  ty += fs2 + 16;
+
+  // Separador
+  ctx.strokeStyle = `rgba(${acc.r},${acc.g},${acc.b},0.3)`;
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(textX, ty);
+  ctx.lineTo(textX+80, ty);
+  ctx.stroke();
+  ty += 12;
+
+  // Preset name small
+  ctx.font      = `${Math.max(12, Math.round(fs3*0.8))}px 'Share Tech Mono', monospace`;
+  ctx.fillStyle = 'rgba(130,130,140,0.8)';
+  ctx.fillText(`STYLE: ${p.name} · #${String(currentStyle).padStart(2,'0')}`, textX, ty);
+
+  // --- BADGE ---
+  if (badge) {
+    ctx.font = `bold ${Math.max(14, Math.round(fs3*0.9))}px ${font}`;
+    const bW = ctx.measureText(badge).width + 32;
+    const bH = Math.max(30, fs3 + 12);
+    const bx = W - bW - 30;
+    const by = 24;
+    ctx.fillStyle = `rgba(${acc.r},${acc.g},${acc.b},0.18)`;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bW, bH, 6);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(${acc.r},${acc.g},${acc.b},0.8)`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle   = '#ffffff';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign   = 'center';
+    ctx.fillText(badge, bx + bW/2, by + bH/2);
+  }
+
+  // --- WATERMARK ---
+  if (wm) {
+    ctx.font = `12px 'Share Tech Mono', monospace`;
+    ctx.fillStyle   = 'rgba(255,255,255,0.2)';
+    ctx.textAlign   = 'right';
+    ctx.textBaseline= 'bottom';
+    ctx.fillText(wm, W-14, H-10);
+  }
+
+  // --- BORDE ---
+  const borderGrad = ctx.createLinearGradient(0,0,W,H);
+  borderGrad.addColorStop(0,   `rgba(${acc.r},${acc.g},${acc.b},0.6)`);
+  borderGrad.addColorStop(0.5, `rgba(${acc2.r},${acc2.g},${acc2.b},0.4)`);
+  borderGrad.addColorStop(1,   `rgba(${acc.r},${acc.g},${acc.b},0.6)`);
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(8,8,W-16,H-16);
+
+  // Update URL output
+  updateUrlOutput();
+}
+
+// ============================================================
+// Carga del avatar
+// ============================================================
+let avatarLoadTimer;
+document.getElementById('i-logo').addEventListener('input', function() {
+  clearTimeout(avatarLoadTimer);
+  avatarLoadTimer = setTimeout(() => loadAvatar(this.value), 500);
+});
+
+function loadAvatar(url) {
+  if (!url) { avatarImg = null; renderCanvas(); return; }
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    createImageBitmap(img).then(bmp => {
+      avatarImg = bmp;
+      avatarUrl = url;
+      renderCanvas();
+    });
+  };
+  img.onerror = () => { avatarImg = null; renderCanvas(); };
+  img.src = url;
+}
+
+// Cargar avatar por defecto al arrancar
+loadAvatar('<?= $img_predeterminada ?>');
+document.getElementById('i-logo').value = '';
+
+// ============================================================
+// Listeners para todos los controles que disparan renderCanvas
+// ============================================================
+['i-w','i-h','i-r','i-ax','i-ay','i-q'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', renderCanvas);
+});
+['e-particles','e-lines','e-noise','e-grid','e-scanlines','e-glitch'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('change', renderCanvas);
+});
+
+// ============================================================
+// Build URL completa para el servidor PHP
+// ============================================================
 function buildUrl() {
-  const logo    = document.getElementById('i-logo').value   || '<?= $img_predeterminada ?>';
-  const t1      = encodeURIComponent(document.getElementById('i-t1').value);
-  const t2      = encodeURIComponent(document.getElementById('i-t2').value);
-  const sub     = encodeURIComponent(document.getElementById('i-sub').value);
-  const badge   = encodeURIComponent(document.getElementById('i-badge').value);
-  const wm      = encodeURIComponent(document.getElementById('i-wm').value);
-  const w       = document.getElementById('i-w').value;
-  const h       = document.getElementById('i-h').value;
-  const r       = document.getElementById('i-r').value;
-  const ax      = document.getElementById('i-ax').value;
-  const ay      = document.getElementById('i-ay').value;
-  const q       = document.getElementById('i-q').value;
-  const particles = document.getElementById('e-particles').checked ? 1 : 0;
-  const lines   = document.getElementById('e-lines').checked ? 1 : 0;
-  const noise   = document.getElementById('e-noise').checked ? 1 : 0;
-  const grid    = document.getElementById('e-grid').checked ? 1 : 0;
-  const scanlines = document.getElementById('e-scanlines').checked ? 1 : 0;
-  const glitch  = document.getElementById('e-glitch').checked ? 1 : 0;
+  const logo  = document.getElementById('i-logo').value || '<?= $img_predeterminada ?>';
+  const t1    = encodeURIComponent(document.getElementById('i-t1').value);
+  const t2    = encodeURIComponent(document.getElementById('i-t2').value);
+  const sub   = encodeURIComponent(document.getElementById('i-sub').value);
+  const badge = encodeURIComponent(document.getElementById('i-badge').value);
+  const wm    = encodeURIComponent(document.getElementById('i-wm').value);
+  const w     = document.getElementById('i-w').value;
+  const h     = document.getElementById('i-h').value;
+  const r     = document.getElementById('i-r').value;
+  const ax    = document.getElementById('i-ax').value;
+  const ay    = document.getElementById('i-ay').value;
+  const q     = document.getElementById('i-q').value;
+  const fs1   = document.getElementById('i-fs1').value;
+  const fs2   = document.getElementById('i-fs2').value;
+  const fs3   = document.getElementById('i-fs3').value;
+  const particles = document.getElementById('e-particles').checked?1:0;
+  const lines   = document.getElementById('e-lines').checked?1:0;
+  const noise   = document.getElementById('e-noise').checked?1:0;
+  const grid    = document.getElementById('e-grid').checked?1:0;
+  const scanlines = document.getElementById('e-scanlines').checked?1:0;
+  const glitch  = document.getElementById('e-glitch').checked?1:0;
 
   const base = window.location.pathname;
   const params = new URLSearchParams({
     logo, estilo: currentStyle, t1, t2, sub, badge, wm,
     w, h, r, ax, ay, particles, lines, noise, grid, scanlines, glitch,
-    fmt: currentFmt, q
+    fmt: currentFmt, q,
+    fs1, fs2, fs3
   });
   return `${base}?${params.toString()}`;
 }
 
-let debounceTimer;
-function updatePreview() {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    const url = buildUrl();
-    const img = document.getElementById('preview-img');
-    img.classList.add('loading');
-    img.onload  = () => img.classList.remove('loading');
-    img.onerror = () => img.classList.remove('loading');
-    img.src = url;
-    document.getElementById('url-output').textContent = url;
-
-    // Count non-default params
-    const sp = new URLSearchParams(url.split('?')[1]);
-    document.getElementById('req-counter').textContent = `PARÁMETROS: ${sp.size}`;
-  }, 400);
+function updateUrlOutput() {
+  const url = window.location.origin + buildUrl();
+  document.getElementById('url-output').textContent = url;
+  const sp = new URLSearchParams(buildUrl().split('?')[1]);
+  document.getElementById('req-counter').textContent = `PARÁMETROS: ${sp.size}`;
 }
 
 function copyApiUrl() {
-  const url = buildUrl();
-  navigator.clipboard.writeText(window.location.origin + url);
+  navigator.clipboard.writeText(window.location.origin + buildUrl());
   showToast('✓ URL copiada al portapapeles');
 }
-function openRaw() { window.open(buildUrl(), '_blank'); }
-
+function openRaw() {
+  window.open(buildUrl(), '_blank');
+}
+function downloadCanvas() {
+  const a = document.createElement('a');
+  a.download = `banner_estilo${currentStyle}.png`;
+  a.href = previewCanvas.toDataURL('image/png');
+  a.click();
+}
 function downloadImg() {
   const a = document.createElement('a');
   a.href = buildUrl();
@@ -629,29 +999,34 @@ function setFmt(fmt, el) {
   currentFmt = fmt;
   document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  updatePreview();
 }
 
 function setSize(w, h) {
   document.getElementById('i-w').value = w;
   document.getElementById('i-h').value = h;
-  updatePreview();
+  renderCanvas();
 }
 
 function resetAll() {
-  document.getElementById('i-t1').value = 'DEYLIN SYSTEMS';
-  document.getElementById('i-t2').value = 'PREMIUM BANNER LAB';
+  document.getElementById('i-t1').value  = 'DEYLIN SYSTEMS';
+  document.getElementById('i-t2').value  = 'PREMIUM BANNER LAB';
   document.getElementById('i-sub').value = 'ENGINE V5.0';
   document.getElementById('i-badge').value = '';
-  document.getElementById('i-wm').value = 'deylin.systems';
-  document.getElementById('i-w').value = 1200;
-  document.getElementById('i-h').value = 600;
-  document.getElementById('i-r').value = 200;
-  document.getElementById('i-ax').value = 15;
-  document.getElementById('i-ay').value = 50;
-  document.getElementById('lbl-r').textContent = 200;
+  document.getElementById('i-wm').value  = 'deylin.systems';
+  document.getElementById('i-w').value   = 1200;
+  document.getElementById('i-h').value   = 600;
+  document.getElementById('i-r').value   = 200;
+  document.getElementById('i-ax').value  = 15;
+  document.getElementById('i-ay').value  = 50;
+  document.getElementById('i-fs1').value = 72;
+  document.getElementById('i-fs2').value = 32;
+  document.getElementById('i-fs3').value = 18;
+  document.getElementById('lbl-r').textContent  = 200;
   document.getElementById('lbl-ax').textContent = 15;
   document.getElementById('lbl-ay').textContent = 50;
+  document.getElementById('lbl-fs1').textContent= 72;
+  document.getElementById('lbl-fs2').textContent= 32;
+  document.getElementById('lbl-fs3').textContent= 18;
   document.getElementById('e-particles').checked = true;
   document.getElementById('e-lines').checked = true;
   document.getElementById('e-noise').checked = true;
@@ -667,23 +1042,18 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
-
 function copyText(el) {
   navigator.clipboard.writeText(el.textContent);
   showToast('✓ Copiado');
 }
-
 function switchTab(name) {
   ['params','examples','integrations'].forEach(t => {
-    document.getElementById(`tab-${t}`).style.display = t === name ? '' : 'none';
+    document.getElementById(`tab-${t}`).style.display = t===name?'':'none';
   });
   document.querySelectorAll('.tab').forEach((t,i) => {
-    t.classList.toggle('active', ['params','examples','integrations'][i] === name);
+    t.classList.toggle('active', ['params','examples','integrations'][i]===name);
   });
 }
-
-// Init
-updatePreview();
 </script>
 </body>
 </html>
@@ -929,13 +1299,47 @@ if ($show_glitch) {
     }
 }
 
-// === TEXTOS ===
-// Helper para centrar/posicionar texto con imagestring (sin FreeType)
-function ds_text($canvas, $size_gd, $x, $y, $text, $color, $shadow_color=null, $shadow_offset=2) {
-    if($shadow_color) {
-        imagestring($canvas, $size_gd, $x+$shadow_offset, $y+$shadow_offset, $text, $shadow_color);
+// === TEXTOS con soporte de tamaño escalado ===
+// GD tiene solo 5 fuentes built-in (1=8px, 2=13px, 3=13px, 4=15px, 5=15px)
+// Para textos grandes usamos imagecopyresampled para escalar un canvas temporal
+
+function ds_text_scaled($canvas, $gd_size, $x, $y, $text, $color, $scale=1, $shadow_col=null) {
+    if ($scale <= 1) {
+        if ($shadow_col) imagestring($canvas, $gd_size, $x+2, $y+2, $text, $shadow_col);
+        imagestring($canvas, $gd_size, $x, $y, $text, $color);
+        return;
     }
-    imagestring($canvas, $size_gd, $x, $y, $text, $color);
+    // Calcula tamaño base de la fuente GD
+    $char_w = imagefontwidth($gd_size);
+    $char_h = imagefontheight($gd_size);
+    $base_w = strlen($text) * $char_w;
+    $base_h = $char_h;
+    $pad = 4;
+    // Dibuja en canvas pequeño
+    $tmp = imagecreatetruecolor($base_w + $pad*2, $base_h + $pad*2);
+    $trans = imagecolorallocate($tmp, 1, 1, 1);
+    imagecolortransparent($tmp, $trans);
+    imagefill($tmp, 0, 0, $trans);
+    $white_tmp = imagecolorallocate($tmp, 255, 255, 255);
+    imagestring($tmp, $gd_size, $pad, $pad, $text, $white_tmp);
+    // Escala al canvas principal
+    $dst_w = (int)(($base_w + $pad*2) * $scale);
+    $dst_h = (int)(($base_h + $pad*2) * $scale);
+    // Sombra
+    if ($shadow_col) {
+        imagecopyresampled($canvas, $tmp, $x+3, $y+3, 0, 0, $dst_w, $dst_h, $base_w+$pad*2, $base_h+$pad*2);
+    }
+    imagecopyresampled($canvas, $tmp, $x, $y, 0, 0, $dst_w, $dst_h, $base_w+$pad*2, $base_h+$pad*2);
+    imagedestroy($tmp);
+}
+
+// Mapa de tamaño px → escala GD
+function px_to_gd_scale($px) {
+    // Fuente GD 5 tiene ~15px de alto base; escalar desde ahí
+    $base_size = 5;
+    $base_px   = 15;
+    $scale = max(1, round($px / $base_px));
+    return [$base_size, $scale];
 }
 
 $white   = imagecolorallocate($canvas, 255, 255, 255);
@@ -944,59 +1348,66 @@ $acc2_c  = imagecolorallocate($canvas, $a2r, $a2g, $a2b);
 $shadow  = imagecolorallocatealpha($canvas, 0, 0, 0, 70);
 $dim     = imagecolorallocate($canvas, 130, 130, 140);
 
+// Tamaños de texto desde parámetros (px)
+// fs1,fs2,fs3 ya están definidos arriba como $fs1,$fs2,$fs3
+[$gd1, $sc1] = px_to_gd_scale($fs1);
+[$gd2, $sc2] = px_to_gd_scale($fs2);
+[$gd3, $sc3] = px_to_gd_scale($fs3);
+
+// Altura real de cada bloque
+$h1 = (int)(imagefontheight($gd1) * $sc1);
+$h2 = (int)(imagefontheight($gd2) * $sc2);
+$h3 = (int)(imagefontheight($gd3) * $sc3);
+
 // Zona de texto: a la derecha del avatar
 $text_x_start = $av_cx + $radius + 40;
 $text_zone_w  = $w - $text_x_start - 40;
+if ($text_x_start > $w * 0.7) $text_x_start = 60;
 
-// Si el avatar está muy a la derecha, ponemos texto a la izquierda
-if ($text_x_start > $w * 0.7) {
-    $text_x_start = 60;
-}
+// Calcular posición Y central según alturas reales
+$text_block_h = $h3 + 10 + $h1 + 14 + $h2 + 30 + 30;
+$text_y_base  = (int)(($h / 2) - ($text_block_h / 2));
+if ($text_y_base < 20) $text_y_base = 20;
 
-// Calcular posición Y central de texto
-$text_block_h = 140; // altura aproximada del bloque de texto
-$text_y_base  = ($h / 2) - ($text_block_h / 2);
+// Línea acento decorativa
+imageline($canvas, $text_x_start, $text_y_base - 14, $text_x_start + 50, $text_y_base - 14, $acc_c);
 
-// Línea decorativa antes del texto principal
-$line_col = imagecolorallocatealpha($canvas, $ar, $ag, $ab, 60);
-imageline($canvas, $text_x_start, (int)$text_y_base - 10, $text_x_start + 60, (int)$text_y_base - 10, $acc_c);
-
-// Preset name / sub-texto pequeño arriba
+// SUB-TEXTO
 if (!empty($sub)) {
     $sub_up = strtoupper($sub);
-    ds_text($canvas, 2, (int)$text_x_start, (int)$text_y_base, $sub_up, $acc2_c, $shadow);
+    ds_text_scaled($canvas, $gd3, $text_x_start, $text_y_base, $sub_up, $acc2_c, $sc3, $shadow);
 }
-$text_y_base += 20;
+$text_y_base += $h3 + 10;
 
-// t1 — texto principal (grande, repetido para simular bold)
+// T1 — TEXTO PRINCIPAL (escalado)
 if (!empty($texto1)) {
     $t1_up = strtoupper($texto1);
-    // Multi-render para grosor
-    for($thick=0; $thick<2; $thick++) {
-        ds_text($canvas, 5, (int)$text_x_start + $thick, (int)$text_y_base + $thick, $t1_up, $white, $shadow, 3);
+    // Render múltiple para simular bold
+    for($thick = 0; $thick < min(3, $sc1); $thick++) {
+        ds_text_scaled($canvas, $gd1, $text_x_start + $thick, $text_y_base + $thick, $t1_up, $white, $sc1, $shadow);
     }
-    // Línea de highlight
-    $hl_len = min(strlen($t1_up) * 9, (int)$text_zone_w);
+    // Línea bajo T1
+    $hl_len = min(strlen($t1_up) * imagefontwidth($gd1) * $sc1, $text_zone_w);
     $hl_c   = imagecolorallocatealpha($canvas, $ar, $ag, $ab, 90);
-    imageline($canvas, (int)$text_x_start, (int)($text_y_base + 22), (int)($text_x_start + $hl_len), (int)($text_y_base + 22), $hl_c);
+    imageline($canvas, $text_x_start, $text_y_base + $h1 + 4, $text_x_start + (int)$hl_len, $text_y_base + $h1 + 4, $hl_c);
 }
-$text_y_base += 38;
+$text_y_base += $h1 + 16;
 
-// t2 — texto secundario
+// T2 — TEXTO SECUNDARIO
 if (!empty($texto2)) {
     $t2_up = strtoupper($texto2);
-    ds_text($canvas, 3, (int)$text_x_start, (int)$text_y_base, $t2_up, $acc_c, $shadow);
+    ds_text_scaled($canvas, $gd2, $text_x_start, $text_y_base, $t2_up, $acc_c, $sc2, $shadow);
 }
-$text_y_base += 30;
+$text_y_base += $h2 + 16;
 
 // Separador
 $sep_c = imagecolorallocatealpha($canvas, $ar, $ag, $ab, 70);
-imageline($canvas, (int)$text_x_start, (int)$text_y_base, (int)($text_x_start + 80), (int)$text_y_base, $sep_c);
+imageline($canvas, $text_x_start, $text_y_base, $text_x_start + 80, $text_y_base, $sep_c);
 $text_y_base += 20;
 
-// Preset name
+// Preset name pequeño
 $pname = $cfg['name'] ?? '';
-ds_text($canvas, 1, (int)$text_x_start, (int)$text_y_base, "STYLE: $pname · #{$estilo}", $dim);
+imagestring($canvas, 1, $text_x_start, $text_y_base, "STYLE: $pname · #{$estilo}", $dim);
 
 // === BADGE ===
 if (!empty($badge_text)) {
